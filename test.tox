@@ -1,0 +1,8 @@
+/*
+this function adds two numbers
+*/
+fn sum(a, b) {
+  return a + b;
+}
+
+log sum(12, 10);
