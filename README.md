@@ -1,16 +1,69 @@
-# lox
+## Tox
 
-[![Travis][build-badge]][build]
-[![npm package][npm-badge]][npm]
-[![Coveralls][coveralls-badge]][coveralls]
+Tox is a small programming language that has been inspired by the Jlox programming language
 
-Describe lox here.
+The scanner, parser & interpreter have all been built by hand, no external library has been involved
 
-[build-badge]: https://img.shields.io/travis/user/repo/master.png?style=flat-square
-[build]: https://travis-ci.org/user/repo
+## Running Tox Locally
 
-[npm-badge]: https://img.shields.io/npm/v/npm-package.png?style=flat-square
-[npm]: https://www.npmjs.org/package/npm-package
+1. Clone this project
+2. Create a `src` folder on the root.
+3. Run `npm install` and `npm run build:watch`
+4. Open a new terminal and run `node src/tox.js file test.tox` to run a file (test.lox is in the root)
+5. To run the repl run `node src/tox.js repl`
 
-[coveralls-badge]: https://img.shields.io/coveralls/user/repo/master.png?style=flat-square
-[coveralls]: https://coveralls.io/github/user/repo
+## Syntax
+
+The syntax is similar to Javascript for the most part.
+
+### Variable declaration
+
+```
+let number = 12;
+let name = "hundred";
+```
+
+### Looping
+
+#### For loops
+
+```
+  for(let i = 0; i < 5; i = i + 1) {
+    log i;
+  }
+```
+
+#### While loops
+
+```
+let num = 0
+while(num < 5) {
+    log "Running";
+    num = num + 1;
+}
+```
+
+### Functions
+
+```
+fn greetings(name) {
+    return "Hello " + name;
+}
+
+log greetings("World");
+```
+
+### Conditionals
+
+```
+let answer = "work";
+if(answer == "work") {
+    log "correct";
+} else {
+    log "try again";
+}
+```
+
+```
+log nil or "twelve"; // prints "twelve"
+```
