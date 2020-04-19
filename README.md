@@ -1,6 +1,6 @@
 ## Tox
 
-Tox is a small programming language that has been inspired by the Jlox programming language
+Tox is a small programming language that has been inspired by the Jlox programming language from https://craftinginterpreters.com/
 
 The scanner, parser & interpreter have all been built by hand, no external library has been involved
 

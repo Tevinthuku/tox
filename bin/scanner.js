@@ -40,6 +40,7 @@ export function Scanner({
     true: "TRUE",
     while: "WHILE",
     let: "LET",
+    if: "IF",
   };
 
   function scanTokens() {

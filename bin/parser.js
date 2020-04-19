@@ -14,7 +14,6 @@ export default function Parser({
   toxInstance: ToxReturnType,
 }) {
   let current = 0;
-
   function parse() {
     let statements = [];
     while (!isAtEnd()) {
