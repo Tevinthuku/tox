@@ -1,5 +1,5 @@
 {
-  "name": "tox",
+  "name": "@tevcodes/tox",
   "version": "1.0.0",
   "description": "Tox Programming language",
   "main": "lib/index.js",

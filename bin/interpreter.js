@@ -12,8 +12,10 @@ export type InterpreterReturnType = {|
 
 export default function Interpreter({
   toxInstance,
+  logFn = console.log,
 }: {
   toxInstance: ToxReturnType,
+  logFn?: (any) => void,
 }): InterpreterReturnType {
   let self = this;
   this.globals = Environment({ toxInstance });
@@ -200,7 +202,7 @@ export default function Interpreter({
     expression: { accept: (any) => void },
   }) {
     const value = evaluate(stmt.expression);
-    console.log(stringify(value));
+    logFn(stringify(value));
     return null;
   };
 
