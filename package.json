@@ -1,6 +1,6 @@
 {
   "name": "@tevcodes/tox",
-  "version": "1.0.0",
+  "version": "1.0.01",
   "description": "Tox Programming language",
   "main": "lib/index.js",
   "module": "es/index.js",
