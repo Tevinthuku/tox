@@ -6,7 +6,7 @@ export type EnvironmentType = {|
   assign: (name: TokenReturnType, value: any) => void,
   define: (name: string, value: any) => void,
   get: (name: TokenReturnType) => void | any,
-  environmentMap: Object,
+  environmentMap: { [string]: mixed },
 |};
 export default function Environment({
   toxInstance,
@@ -15,9 +15,9 @@ export default function Environment({
   toxInstance: ToxReturnType,
   enclosing?: EnvironmentType,
 }): EnvironmentType {
-  let environmentMap: { [string]: any } = {};
+  let environmentMap: { [string]: mixed } = {};
 
-  function define(name: string, value: any) {
+  function define(name: string, value: mixed) {
     environmentMap[name] = value;
   }
 
@@ -29,7 +29,7 @@ export default function Environment({
     toxInstance.runtimeError(name, `Undefined variable " ${name.lexeme} " .`);
   }
 
-  function assign(name: TokenReturnType, value: any) {
+  function assign(name: TokenReturnType, value: mixed) {
     if (environmentMap.hasOwnProperty(name.lexeme)) {
       environmentMap[name.lexeme] = value;
       return;

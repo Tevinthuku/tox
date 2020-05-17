@@ -1,14 +1,86 @@
 // @flow
-import Environment from "./environment";
+import Environment, { type EnvironmentType } from "./environment";
 
 import { type TokenType, type TokenReturnType } from "./token";
 import { type ExprType } from "./expr";
 import { type ToxReturnType } from "./tox";
-import loxFunction from "./toxfunction";
+import loxFunction, { type DeclarationType } from "./toxfunction";
 
 export type InterpreterReturnType = {|
   interpret: (statements: Array<{ accept: (any) => void }>) => void,
 |};
+
+type SupportedTypes = string | boolean | number;
+
+type InterPreterFunctions = {
+  visitLiteralExpression: (expr: { value: mixed }) => any,
+  visitUnaryExpression: (expr: {
+    operator: TokenReturnType,
+    right: GenericAcceptObject<mixed>,
+  }) => null | number | boolean,
+  visitVariableExpression: (expr: { name: TokenReturnType }) => any | void,
+  visitGroupingExpression: (expr: {
+    expression: GenericAcceptObject<mixed>,
+  }) => any | void,
+  visitBinaryExpression: (expr: {
+    left: GenericAcceptObject<string | number>,
+    operator: TokenReturnType,
+    right: GenericAcceptObject<string | number>,
+  }) => null | number | string | boolean,
+  visitAssignmentExpression: (expr: {
+    value: GenericAcceptObject<SupportedTypes>,
+    name: TokenReturnType,
+  }) => any | void,
+  visitLogicalExpression: (expr: {
+    left: GenericAcceptObject<SupportedTypes>,
+    operator: TokenReturnType,
+    right: GenericAcceptObject<SupportedTypes>,
+  }) => any | void,
+  visitCallExpression: (expr: {
+    args: Array<GenericAcceptObject<SupportedTypes>>,
+    calle: {
+      accept: (any) => {
+        arity: () => number,
+        call: (InterPreterFunctions, Array<SupportedTypes>) => void,
+      },
+    },
+    paren: TokenReturnType,
+  }) => void | any,
+  visitReturnStatement: (stmt: {
+    value: GenericAcceptObject<mixed>,
+  }) => empty,
+  visitFunctionStatement: (stmt: DeclarationType) => null,
+  visitExpressionStatement: (stmt: {
+    expression: GenericAcceptObject<mixed>,
+  }) => null,
+  visitLogStatement: (stmt: {
+    expression: GenericAcceptObject<mixed>,
+  }) => null,
+  visitLetStatement: (stmt: {
+    initializer: GenericAcceptObject<mixed>,
+    name: TokenReturnType,
+  }) => null,
+  visitBlockStatement: (stmt: {
+    statements: Array<GenericAcceptObject<mixed>>,
+  }) => null,
+  visitIfStatement: (stmt: {
+    condition: null | boolean,
+    elseBranch: GenericAcceptObject<mixed>,
+    thenBranch: GenericAcceptObject<mixed>,
+  }) => null,
+  visitWhileStatement: (stmt: {
+    body: GenericAcceptObject<mixed>,
+    condition: GenericAcceptObject<mixed>,
+  }) => null,
+  executeBlock: (
+    statements: Array<GenericAcceptObject<mixed>>,
+    env: EnvironmentType
+  ) => void,
+};
+
+type GenericAcceptObject<T> = {
+  accept: (InterPreterFunctions) => T,
+};
 
 export default function Interpreter({
   toxInstance,
@@ -17,30 +89,20 @@ export default function Interpreter({
   toxInstance: ToxReturnType,
   logFn?: (any) => void,
 }): InterpreterReturnType {
-  let self = this;
-  this.globals = Environment({ toxInstance });
-  let environment = this.globals;
+  const globals: EnvironmentType = Environment({ toxInstance });
+  let environment: EnvironmentType = globals;
 
-  // global functions
-  this.globals.define("clock", {
-    call: (self, []) => Date.now(),
-    arity: () => 0,
-    toString: () => "<Native fn>",
-  });
-
-  this.visitLiteralExpression = function visitLiteralExpression(expr: {
-    value: any,
-  }) {
+  function visitLiteralExpression(expr) {
     return expr.value;
-  };
+  }
 
   function stringify(object) {
     if (object == null) return "nil";
     return object;
   }
 
-  this.visitUnaryExpression = function visitUnaryExpression(expr: {
-    right: any,
+  function visitUnaryExpression(expr: {
+    right: GenericAcceptObject<mixed>,
     operator: TokenReturnType,
   }) {
     const right = evaluate(expr.right);
@@ -51,13 +113,11 @@ export default function Interpreter({
         return !isTruthy(right);
     }
     return null;
-  };
+  }
 
-  this.visitVariableExpression = function visitVariableExpression(expr: {
-    name: TokenReturnType,
-  }) {
+  function visitVariableExpression(expr: { name: TokenReturnType }) {
     return environment.get(expr.name);
-  };
+  }
 
   function isTruthy(object) {
     if (object === null) return false;
@@ -65,15 +125,15 @@ export default function Interpreter({
     return true;
   }
 
-  this.visitGroupingExpression = function visitGroupingExpression(expr: {
-    expression: { accept: (any) => void },
+  function visitGroupingExpression(expr: {
+    expression: GenericAcceptObject<mixed>,
   }) {
     return evaluate(expr.expression);
-  };
+  }
 
-  this.visitBinaryExpression = function visitBinaryExpression(expr: {
-    left: any,
-    right: any,
+  function visitBinaryExpression(expr: {
+    left: GenericAcceptObject<string | number>,
+    right: GenericAcceptObject<string | number>,
     operator: TokenReturnType,
   }) {
     const left = evaluate(expr.left);
@@ -120,15 +180,22 @@ export default function Interpreter({
     }
 
     return null;
-  };
+  }
 
-  this.visitAssignmentExpression = function visitAssignmentExpression(expr) {
+  function visitAssignmentExpression(expr: {
+    value: GenericAcceptObject<SupportedTypes>,
+    name: TokenReturnType,
+  }) {
     const value = evaluate(expr.value);
     environment.assign(expr.name, value);
     return value;
-  };
+  }
 
-  this.visitLogicalExpression = function visitLogicalExpression(expr) {
+  function visitLogicalExpression(expr: {
+    left: GenericAcceptObject<SupportedTypes>,
+    operator: TokenReturnType,
+    right: GenericAcceptObject<SupportedTypes>,
+  }) {
     const left = evaluate(expr.left);
     if (expr.operator.type === "OR") {
       if (isTruthy(left)) return left;
@@ -137,16 +204,17 @@ export default function Interpreter({
     }
 
     return evaluate(expr.right);
-  };
+  }
 
-  this.visitCallExpression = function visitCallExpression(expr: {
+  function visitCallExpression(expr: {
     calle: {
-      accept: (Object) => any,
+      accept: (Object) => {
+        call: (InterPreterFunctions, Array<SupportedTypes>) => void,
+        arity: () => number,
+      },
     },
     paren: TokenReturnType,
-    args: Array<{
-      accept: (Object) => any,
-    }>,
+    args: Array<GenericAcceptObject<SupportedTypes>>,
   }) {
     const callee = evaluate(expr.calle);
     let expressionargs = [];
@@ -154,12 +222,10 @@ export default function Interpreter({
       expressionargs.push(evaluate(arg));
     }
 
-    // $FlowFixMe
     if (!callee.arity)
       return toxInstance.runtimeError(expr.paren, "Can only call functions");
 
     const fn = callee;
-    // $FlowFixMe
     if (expressionargs.length !== fn.arity()) {
       return toxInstance.runtimeError(
         expr.paren,
@@ -170,18 +236,18 @@ export default function Interpreter({
           "."
       );
     }
-    // $FlowFixMe
-    return fn.call(self, expressionargs);
-  };
+    return fn.call(interpreterFunctions, expressionargs);
+  }
+
   // statements
 
-  this.visitReturnStatement = function visitReturnStatement(stmt) {
+  function visitReturnStatement(stmt: { value: GenericAcceptObject<mixed> }) {
     let value = null;
     if (stmt.value) value = evaluate(stmt.value);
 
     throw value;
-  };
-  this.visitFunctionStatement = function visitFunctionStatement(stmt) {
+  }
+  function visitFunctionStatement(stmt: DeclarationType) {
     const fn = loxFunction({
       declaration: stmt,
       toxInstance,
@@ -189,26 +255,24 @@ export default function Interpreter({
     });
     environment.define(stmt.name.lexeme, fn);
     return null;
-  };
+  }
 
-  this.visitExpressionStatement = function visitExpressionStatement(stmt: {
-    expression: { accept: (any) => void },
+  function visitExpressionStatement(stmt: {
+    expression: GenericAcceptObject<mixed>,
   }) {
     evaluate(stmt.expression);
     return null;
-  };
+  }
 
-  this.visitLogStatement = function visitLogStatement(stmt: {
-    expression: { accept: (any) => void },
-  }) {
+  function visitLogStatement(stmt: { expression: GenericAcceptObject<mixed> }) {
     const value = evaluate(stmt.expression);
     logFn(stringify(value));
     return null;
-  };
+  }
 
-  this.visitLetStatement = function visitLetStatement(stmt: {
+  function visitLetStatement(stmt: {
     name: TokenReturnType,
-    initializer: any,
+    initializer: GenericAcceptObject<mixed>,
   }) {
     let value = null;
     if (stmt.initializer != null) {
@@ -217,20 +281,22 @@ export default function Interpreter({
 
     environment.define(stmt.name.lexeme, value);
     return null;
-  };
+  }
 
-  this.visitBlockStatement = function visitBlockStatement(stmt) {
-    this.executeBlock(
+  function visitBlockStatement(stmt: {
+    statements: Array<GenericAcceptObject<mixed>>,
+  }) {
+    executeBlock(
       stmt.statements,
       new Environment({ toxInstance, enclosing: environment })
     );
     return null;
-  };
+  }
 
-  this.visitIfStatement = function (stmt: {
-    condition: any,
-    thenBranch: any,
-    elseBranch: any,
+  function visitIfStatement(stmt: {
+    condition: null | boolean,
+    thenBranch: GenericAcceptObject<mixed>,
+    elseBranch: GenericAcceptObject<mixed>,
   }) {
     if (isTruthy(stmt.condition)) {
       execute(stmt.thenBranch);
@@ -239,71 +305,99 @@ export default function Interpreter({
     }
 
     return null;
-  };
+  }
 
-  this.visitWhileStatement = function (stmt) {
+  function visitWhileStatement(stmt: {
+    condition: GenericAcceptObject<mixed>,
+    body: GenericAcceptObject<mixed>,
+  }) {
     while (isTruthy(evaluate(stmt.condition))) {
       execute(stmt.body);
     }
 
     return null;
-  };
+  }
 
-  this.executeBlock = function executeBlock(statements, env) {
+  function executeBlock(
+    statements: Array<GenericAcceptObject<mixed>>,
+    env: EnvironmentType
+  ) {
     const previousEnvironment = environment;
     try {
       environment = env;
-      self.environment = env;
       for (const statement of statements) {
         execute(statement);
       }
     } finally {
       environment = previousEnvironment;
-      self.environment = previousEnvironment;
     }
-  };
+  }
 
   function isEqual(a, b) {
     if (a == null && b == null) return true;
     if (a == null) return false;
-    return deepEqual(a, b);
+    return a === b;
   }
 
-  function deepEqual(x, y) {
-    const ok = Object.keys,
-      tx = typeof x,
-      ty = typeof y;
-    return x && y && tx === "object" && tx === ty
-      ? ok(x).length === ok(y).length &&
-          ok(x).every((key) => deepEqual(x[key], y[key]))
-      : x === y;
-  }
-
-  function checkNumberOperand(operator: TokenReturnType, operand: any) {
+  function checkNumberOperand(
+    operator: TokenReturnType,
+    operand: number | string
+  ) {
     if (typeof operand === "number") return;
     toxInstance.runtimeError(operator, "Operand must be a number");
   }
 
   function checkNumberOperands(
     operator: TokenReturnType,
-    left: any,
-    right: any
+    left: number | string,
+    right: number | string
   ) {
     if (typeof left === "number" && typeof right === "number") return;
     toxInstance.runtimeError(operator, "Operands must be a number");
   }
 
+  const interpreterFunctions: InterPreterFunctions = {
+    visitAssignmentExpression,
+    visitBinaryExpression,
+    visitBlockStatement,
+    visitCallExpression,
+    visitExpressionStatement,
+    visitFunctionStatement,
+    visitGroupingExpression,
+    visitIfStatement,
+    visitLetStatement,
+    visitLiteralExpression,
+    visitLogStatement,
+    visitLogicalExpression,
+    visitReturnStatement,
+    visitUnaryExpression,
+    visitVariableExpression,
+    visitWhileStatement,
+    executeBlock,
+  };
+
+  // global functions
+
+  globals.define("clock", {
+    call: (interpreterFunctions: InterPreterFunctions, []) => Date.now(),
+    arity: () => 0,
+    toString: () => "<Native fn>",
+  });
+
   // evaluate expression
-  function evaluate(expr) {
-    return expr.accept(self);
+
+  function evaluate<T>(expr: { accept: (InterPreterFunctions) => T }): T {
+    return expr.accept(interpreterFunctions);
   }
 
   // execute statement
-  function execute(statement) {
-    statement.accept(self);
+  function execute<T>(statement: { accept: (InterPreterFunctions) => T }) {
+    statement.accept(interpreterFunctions);
   }
 
-  function interpret(statements: Array<{ accept: (any) => void }>) {
+  function interpret(
+    statements: Array<{ accept: (InterPreterFunctions) => void }>
+  ) {
     try {
       for (const statement of statements) {
         execute(statement);

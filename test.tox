@@ -1,6 +1,7 @@
 /*
 this function adds two numbers
 */
+
 fn sum(a, b) {
   return a + b;
 }

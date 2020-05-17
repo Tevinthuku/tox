@@ -5,12 +5,13 @@ import type { TokenReturnType } from "./token";
 import type { StmtType } from "./stmt";
 import type { ToxReturnType } from "./tox";
 
+export type DeclarationType = {
+  name: TokenReturnType,
+  params: Array<TokenReturnType>,
+  body: Array<StmtType>,
+};
 type Props = {
-  declaration: {
-    name: TokenReturnType,
-    params: Array<TokenReturnType>,
-    body: Array<StmtType>,
-  },
+  declaration: DeclarationType,
   toxInstance: ToxReturnType,
   closure: EnvironmentType,
 };
