@@ -106,6 +106,12 @@ export function Scanner({
             if (peek() == "\n") line++;
             advance();
           }
+
+          // Unterminated multiline comments.
+          if (isAtEnd()) {
+            toxInstance.error(line, "Unterminated multiline comment.");
+            break;
+          }
           current += 2;
         } else {
           addToken("SLASH");
