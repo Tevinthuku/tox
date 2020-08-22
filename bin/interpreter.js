@@ -64,7 +64,7 @@ type InterPreterFunctions = {
     statements: Array<GenericAcceptObject<mixed>>,
   }) => null,
   visitIfStatement: (stmt: {
-    condition: null | boolean,
+    condition: GenericAcceptObject<mixed>,
     elseBranch: GenericAcceptObject<mixed>,
     thenBranch: GenericAcceptObject<mixed>,
   }) => null,
@@ -294,11 +294,11 @@ export default function Interpreter({
   }
 
   function visitIfStatement(stmt: {
-    condition: null | boolean,
+    condition: GenericAcceptObject<mixed>,
     thenBranch: GenericAcceptObject<mixed>,
     elseBranch: GenericAcceptObject<mixed>,
   }) {
-    if (isTruthy(stmt.condition)) {
+    if (isTruthy(evaluate(stmt.condition))) {
       execute(stmt.thenBranch);
     } else if (stmt.elseBranch != null) {
       execute(stmt.elseBranch);

@@ -67,3 +67,19 @@ if(answer == "work") {
 ```
 log nil or "twelve"; // prints "twelve"
 ```
+
+### Extra features.
+
+#### Do Statement.
+I took inspiration from the `do expression` that's currently an [Ecmascript expression](https://github.com/tc39/proposal-do-expressions) 
+
+```
+let a = 12;
+do {
+  if(a == 111) {
+    log("true");
+  } else {
+    log("false"); //logs false here
+  }
+}
+```

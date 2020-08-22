@@ -67,8 +67,14 @@ export default function Parser({
     if (match("LOG")) return logStatement();
     if (match("RETURN")) return returnStatement();
     if (match("WHILE")) return whileStatement();
+    if (match("DO")) return doStatement();
     if (match("LEFT_BRACE")) return new Stmt().Block(block());
     return expressionStatement();
+  }
+
+  function doStatement() {
+    consume("LEFT_BRACE", "Expect '{' after 'do'");
+    return new Stmt().Block(block());
   }
 
   function forStatement() {

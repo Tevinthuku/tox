@@ -37,6 +37,7 @@ export type TokenType =
   | "TRUE"
   | "LET"
   | "WHILE"
+  | "DO"
   | "EOF";
 
 export type TokenReturnType = {|
