@@ -41,6 +41,7 @@ export function Scanner({
     while: "WHILE",
     let: "LET",
     if: "IF",
+    do: "DO",
   };
 
   function scanTokens() {
