@@ -1,68 +1,77 @@
 // @flow
 import type { TokenReturnType } from "./token";
 
+type ExpressionStatement = (expression: any) => {|
+  accept: (visitor: {
+    visitExpressionStatement: (any) => any,
+  }) => any,
+|};
+
+type LogStatement = (expression: any) => {|
+  accept: (visitor: {
+    visitLogStatement: (any) => any,
+  }) => any,
+|};
+
+type LetStatement = (
+  name: any,
+  initializer: any
+) => {|
+  accept: (visitor: {
+    visitLetStatement: (any) => any,
+  }) => any,
+|};
+
+type BlockStatement = (statements: Array<Object>) => {|
+  accept: (visitor: {
+    visitBlockStatement: (any) => any,
+  }) => any,
+|};
+
+type IfStatement = (
+  condition: any,
+  thenBranch: any,
+  elseBranch: any
+) => {|
+  accept: (visitor: { visitIfStatement: (any) => any }) => any,
+|};
+
+type WhileStatement = (
+  condition: any,
+  body: any
+) => {|
+  accept: (visitor: {
+    visitWhileStatement: (any) => any,
+  }) => any,
+|};
+
+type FnStatement = (
+  name: any,
+  params: any,
+  body: any
+) => {|
+  accept: (visitor: {
+    visitFunctionStatement: (any) => any,
+  }) => any,
+|};
+
+type ReturnStatement = (
+  keyword: any,
+  value: any
+) => {|
+  accept: (visitor: {
+    visitReturnStatement: (any) => any,
+  }) => any,
+|};
 export type StmtType = {|
-  Expression: (
-    expression: any
-  ) => {|
-    accept: (visitor: {
-      visitExpressionStatement: (any) => any,
-    }) => any,
-  |},
-  Log: (
-    expression: any
-  ) => {|
-    accept: (visitor: {
-      visitLogStatement: (any) => any,
-    }) => any,
-  |},
-  Let: (
-    name: any,
-    initializer: any
-  ) => {|
-    accept: (visitor: {
-      visitLetStatement: (any) => any,
-    }) => any,
-  |},
-  Block: (
-    statements: Array<Object>
-  ) => {|
-    accept: (visitor: {
-      visitBlockStatement: (any) => any,
-    }) => any,
-  |},
-  If: (
-    condition: any,
-    thenBranch: any,
-    elseBranch: any
-  ) => {|
-    accept: (visitor: { visitIfStatement: (any) => any }) => any,
-  |},
-  While: (
-    condition: any,
-    body: any
-  ) => {|
-    accept: (visitor: {
-      visitWhileStatement: (any) => any,
-    }) => any,
-  |},
-  Fn: (
-    name: any,
-    params: any,
-    body: any
-  ) => {|
-    accept: (visitor: {
-      visitFunctionStatement: (any) => any,
-    }) => any,
-  |},
-  Return: (
-    keyword: any,
-    value: any
-  ) => {|
-    accept: (visitor: {
-      visitReturnStatement: (any) => any,
-    }) => any,
-  |},
+  Expression: ExpressionStatement,
+  Log: LogStatement,
+  Let: LetStatement,
+  Block: BlockStatement,
+  If: IfStatement,
+  While: WhileStatement,
+  Fn: FnStatement,
+  Return: ReturnStatement,
 |};
 export default function Stmt(): StmtType {
   function Expression(expression: any) {
