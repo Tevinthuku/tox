@@ -2,7 +2,7 @@
 import { Scanner } from "./scanner";
 import Parser from "./parser";
 import Interpreter from "./interpreter";
-import { type TokenReturnType } from "./token";
+import { Token } from "./token";
 const readline = require("readline");
 var fs = require("fs");
 
@@ -64,7 +64,7 @@ export class Tox {
     this.setHadError(true);
   }
 
-  tokenError(token: TokenReturnType, message: string) {
+  tokenError(token: Token, message: string) {
     if (token.type === "EOF") {
       this.report(token.line, " at end", message);
     } else {
@@ -72,7 +72,7 @@ export class Tox {
     }
   }
 
-  runtimeError(token: TokenReturnType, message: string) {
+  runtimeError(token: Token, message: string) {
     console.error(message + "\n[line " + token.line + "]");
     this.hadRuntimeError = true;
   }

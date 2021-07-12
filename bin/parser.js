@@ -1,17 +1,17 @@
 // @flow
 
-import { type TokenReturnType, type TokenType } from "./token";
+import { Token, type TokenType } from "./token";
 import Expr from "./expr";
 import Stmt from "./stmt";
 
-type ReporterMethods = {
-  runtimeError: (token: TokenReturnType, message: string) => void,
-  tokenError: (token: TokenReturnType, message: string) => void,
+type Reporter = {
+  runtimeError: (token: Token, message: string) => void,
+  tokenError: (token: Token, message: string) => void,
 };
 
 type Args = {
-  tokens: Array<TokenReturnType> | Array<any>,
-  report: ReporterMethods,
+  tokens: Array<Token> | Array<any>,
+  report: Reporter,
 };
 
 export default function Parser({ tokens, report }: Args) {

@@ -1,21 +1,21 @@
 // @flow
-import type { TokenReturnType } from "./token";
+import type { Token } from "./token";
 
 export type EnvironmentType = {|
-  assign: (name: TokenReturnType, value: any) => void,
+  assign: (name: Token, value: any) => void,
   define: (name: string, value: any) => void,
-  get: (name: TokenReturnType) => void | any,
+  get: (name: Token) => void | any,
   environmentMap: { [string]: mixed },
 |};
 
-type ReportRunTimeError = (TokenReturnType, string) => void;
+type ReportRunTimeError = (Token, string) => void;
 
-type Report = {
+type Reporter = {
   runtimeError: ReportRunTimeError,
 };
 
 type Args = {
-  report: Report,
+  report: Reporter,
   enclosing?: EnvironmentType,
 };
 export default function Environment({
@@ -28,7 +28,7 @@ export default function Environment({
     environmentMap[name] = value;
   }
 
-  function get(name: TokenReturnType) {
+  function get(name: Token) {
     if (environmentMap.hasOwnProperty(name.lexeme)) {
       return environmentMap[name.lexeme];
     }
@@ -36,7 +36,7 @@ export default function Environment({
     report.runtimeError(name, `Undefined variable " ${name.lexeme} " .`);
   }
 
-  function assign(name: TokenReturnType, value: mixed) {
+  function assign(name: Token, value: mixed) {
     if (environmentMap.hasOwnProperty(name.lexeme)) {
       environmentMap[name.lexeme] = value;
       return;

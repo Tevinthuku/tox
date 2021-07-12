@@ -1,16 +1,16 @@
 // @flow
 import Environment from "./environment";
 import type { EnvironmentType } from "./environment";
-import type { TokenReturnType } from "./token";
+import { Token } from "./token";
 import type { StmtType } from "./stmt";
 
 export type DeclarationType = {
-  name: TokenReturnType,
-  params: Array<TokenReturnType>,
+  name: Token,
+  params: Array<Token>,
   body: Array<StmtType>,
 };
 
-type ReportRunTimeError = (TokenReturnType, string) => void;
+type ReportRunTimeError = (Token, string) => void;
 
 type Report = {
   runtimeError: ReportRunTimeError,

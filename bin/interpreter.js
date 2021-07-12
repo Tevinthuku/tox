@@ -1,7 +1,7 @@
 // @flow
 import Environment, { type EnvironmentType } from "./environment";
 
-import { type TokenType, type TokenReturnType } from "./token";
+import { type TokenType, Token } from "./token";
 import { type ExprType } from "./expr";
 import loxFunction, { type DeclarationType } from "./toxfunction";
 
@@ -14,25 +14,25 @@ type SupportedTypes = string | boolean | number;
 type InterPreterFunctions = {
   visitLiteralExpression: (expr: { value: mixed }) => any,
   visitUnaryExpression: (expr: {
-    operator: TokenReturnType,
+    operator: Token,
     right: GenericAcceptObject<mixed>,
   }) => null | number | boolean,
-  visitVariableExpression: (expr: { name: TokenReturnType }) => any | void,
+  visitVariableExpression: (expr: { name: Token }) => any | void,
   visitGroupingExpression: (expr: {
     expression: GenericAcceptObject<mixed>,
   }) => any | void,
   visitBinaryExpression: (expr: {
     left: GenericAcceptObject<string | number>,
-    operator: TokenReturnType,
+    operator: Token,
     right: GenericAcceptObject<string | number>,
   }) => null | number | string | boolean,
   visitAssignmentExpression: (expr: {
     value: GenericAcceptObject<SupportedTypes>,
-    name: TokenReturnType,
+    name: Token,
   }) => any | void,
   visitLogicalExpression: (expr: {
     left: GenericAcceptObject<SupportedTypes>,
-    operator: TokenReturnType,
+    operator: Token,
     right: GenericAcceptObject<SupportedTypes>,
   }) => any | void,
   visitCallExpression: (expr: {
@@ -43,7 +43,7 @@ type InterPreterFunctions = {
         call: (InterPreterFunctions, Array<SupportedTypes>) => void,
       },
     },
-    paren: TokenReturnType,
+    paren: Token,
   }) => void | any,
   visitReturnStatement: (stmt: {
     value: GenericAcceptObject<mixed>,
@@ -57,7 +57,7 @@ type InterPreterFunctions = {
   }) => null,
   visitLetStatement: (stmt: {
     initializer: GenericAcceptObject<mixed>,
-    name: TokenReturnType,
+    name: Token,
   }) => null,
   visitBlockStatement: (stmt: {
     statements: Array<GenericAcceptObject<mixed>>,
@@ -81,7 +81,7 @@ type GenericAcceptObject<T> = {
   accept: (InterPreterFunctions) => T,
 };
 
-type ReportRunTimeError = (TokenReturnType, string) => void;
+type ReportRunTimeError = (Token, string) => void;
 
 type Report = {
   runtimeError: ReportRunTimeError,
@@ -109,7 +109,7 @@ export default function Interpreter({
 
   function visitUnaryExpression(expr: {
     right: GenericAcceptObject<mixed>,
-    operator: TokenReturnType,
+    operator: Token,
   }) {
     const right = evaluate(expr.right);
     switch (expr.operator.type) {
@@ -121,7 +121,7 @@ export default function Interpreter({
     return null;
   }
 
-  function visitVariableExpression(expr: { name: TokenReturnType }) {
+  function visitVariableExpression(expr: { name: Token }) {
     return environment.get(expr.name);
   }
 
@@ -140,7 +140,7 @@ export default function Interpreter({
   function visitBinaryExpression(expr: {
     left: GenericAcceptObject<string | number>,
     right: GenericAcceptObject<string | number>,
-    operator: TokenReturnType,
+    operator: Token,
   }) {
     const left = evaluate(expr.left);
     const right = evaluate(expr.right);
@@ -190,7 +190,7 @@ export default function Interpreter({
 
   function visitAssignmentExpression(expr: {
     value: GenericAcceptObject<SupportedTypes>,
-    name: TokenReturnType,
+    name: Token,
   }) {
     const value = evaluate(expr.value);
     environment.assign(expr.name, value);
@@ -199,7 +199,7 @@ export default function Interpreter({
 
   function visitLogicalExpression(expr: {
     left: GenericAcceptObject<SupportedTypes>,
-    operator: TokenReturnType,
+    operator: Token,
     right: GenericAcceptObject<SupportedTypes>,
   }) {
     const left = evaluate(expr.left);
@@ -219,7 +219,7 @@ export default function Interpreter({
         arity: () => number,
       },
     },
-    paren: TokenReturnType,
+    paren: Token,
     args: Array<GenericAcceptObject<SupportedTypes>>,
   }) {
     const callee = evaluate(expr.calle);
@@ -277,7 +277,7 @@ export default function Interpreter({
   }
 
   function visitLetStatement(stmt: {
-    name: TokenReturnType,
+    name: Token,
     initializer: GenericAcceptObject<mixed>,
   }) {
     let value = null;
@@ -345,16 +345,13 @@ export default function Interpreter({
     return a === b;
   }
 
-  function checkNumberOperand(
-    operator: TokenReturnType,
-    operand: number | string
-  ) {
+  function checkNumberOperand(operator: Token, operand: number | string) {
     if (typeof operand === "number") return;
     report.runtimeError(operator, "Operand must be a number");
   }
 
   function checkNumberOperands(
-    operator: TokenReturnType,
+    operator: Token,
     left: number | string,
     right: number | string
   ) {

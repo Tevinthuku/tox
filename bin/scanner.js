@@ -10,16 +10,7 @@ type Args = {
 };
 
 export function Scanner({ source, reportError }: Args): {|
-  scanTokens: () => Array<
-    | any
-    | {|
-        lexeme: string,
-        line: number,
-        literal: null | string,
-        toString: () => string,
-        type: TokenType,
-      |}
-  >,
+  scanTokens: () => Array<Token>,
 |} {
   let tokens = [];
   let start = 0;
@@ -50,7 +41,7 @@ export function Scanner({ source, reportError }: Args): {|
       scanToken();
     }
 
-    tokens.push(Token("EOF", "", null, line));
+    tokens.push(new Token("EOF", "", null, line));
     return tokens;
   }
 
@@ -209,7 +200,7 @@ export function Scanner({ source, reportError }: Args): {|
 
   function addToken(type: TokenType, literal) {
     const text = source.substring(start, current);
-    tokens.push(Token(type, text, literal, line));
+    tokens.push(new Token(type, text, literal, line));
   }
 
   function isAtEnd() {

@@ -1,6 +1,6 @@
 // @flow
 
-import type { TokenReturnType } from "./token";
+import { Token } from "./token";
 
 type VariableExpression = (name: any) => {|
   accept: (visitor: {
@@ -43,8 +43,8 @@ type CallExpression = (
   },
 |};
 export type ExprType = {|
-  Binary: (left: any, operator: TokenReturnType, right: any) => any,
-  Unary: (operator: TokenReturnType, right: any) => any,
+  Binary: (left: any, operator: Token, right: any) => any,
+  Unary: (operator: Token, right: any) => any,
   Literal: (value: any) => any,
   Grouping: (expr: any) => any,
   Variable: VariableExpression,
@@ -53,14 +53,14 @@ export type ExprType = {|
   Call: CallExpression,
 |};
 export default function Expr(): ExprType {
-  function Binary(left: any, operator: TokenReturnType, right: any) {
+  function Binary(left: any, operator: Token, right: any) {
     const accept = (visitor: { visitBinaryExpression: (Object) => any }) => {
       return visitor.visitBinaryExpression({ left, operator, right });
     };
     return { accept };
   }
 
-  function Unary(operator: TokenReturnType, right: any) {
+  function Unary(operator: Token, right: any) {
     const accept = (visitor: { visitUnaryExpression: (Object) => any }) => {
       return visitor.visitUnaryExpression({ operator, right });
     };

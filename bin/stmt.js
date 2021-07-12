@@ -1,5 +1,5 @@
 // @flow
-import type { TokenReturnType } from "./token";
+import { Token } from "./token";
 
 type ExpressionStatement = (expression: any) => {|
   accept: (visitor: {
