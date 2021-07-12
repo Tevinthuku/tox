@@ -49,7 +49,7 @@ class Parser {
     if (!this.check("RIGHT_PAREN")) {
       do {
         if (parameters.length > 255) {
-          this.report.runtimeError(
+          throw this.report.runtimeError(
             this.peek(),
             "Cannot have more than 255 parameters"
           );
