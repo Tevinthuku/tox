@@ -9,95 +9,99 @@ type Reporter = {
   tokenError: (token: Token, message: string) => void,
 };
 
-type Args = {
-  tokens: Array<Token> | Array<any>,
-  report: Reporter,
-};
-
-export default function Parser({ tokens, report }: Args) {
-  let current = 0;
-  function parse() {
+class Parser {
+  current = 0;
+  tokens: Token[];
+  report: Reporter;
+  constructor({ tokens, report }: Args) {
+    this.tokens = tokens;
+    this.report = report;
+  }
+  parse() {
     let statements = [];
-    while (!isAtEnd()) {
-      statements.push(declaration());
+    while (!this.isAtEnd()) {
+      statements.push(this.declaration());
     }
 
     return statements;
   }
-  function expression() {
-    return assignment();
+  expression() {
+    return this.assignment();
   }
 
-  function declaration() {
+  declaration() {
     try {
-      if (match("FN")) return fn();
-      if (match("LET")) return varDeclaration();
-      return statement();
+      if (this.match("FN")) return this.fn();
+      if (this.match("LET")) return this.varDeclaration();
+      return this.statement();
     } catch (error) {
-      synchronize();
+      this.synchronize();
       return null;
     }
   }
 
-  function fn() {
+  fn() {
     const kind = "function";
-    const name = consume("IDENTIFIER", "Expect " + kind + " name.");
-    consume("LEFT_PAREN", "Expect '(' after " + kind + " name.");
+    const name = this.consume("IDENTIFIER", "Expect " + kind + " name.");
+    this.consume("LEFT_PAREN", "Expect '(' after " + kind + " name.");
 
     let parameters = [];
-    if (!check("RIGHT_PAREN")) {
+    if (!this.check("RIGHT_PAREN")) {
       do {
         if (parameters.length > 255) {
-          report.runtimeError(peek(), "Cannot have more than 255 parameters");
+          this.report.runtimeError(
+            this.peek(),
+            "Cannot have more than 255 parameters"
+          );
         }
-        parameters.push(consume("IDENTIFIER", "Expect parameter name"));
-      } while (match("COMMA"));
+        parameters.push(this.consume("IDENTIFIER", "Expect parameter name"));
+      } while (this.match("COMMA"));
     }
 
-    consume("RIGHT_PAREN", "Expect ')' after parameters.");
-    consume("LEFT_BRACE", "Expect '{' before " + kind + " body.");
-    const body = block();
+    this.consume("RIGHT_PAREN", "Expect ')' after parameters.");
+    this.consume("LEFT_BRACE", "Expect '{' before " + kind + " body.");
+    const body = this.block();
     return Stmt().Fn(name, parameters, body);
   }
 
-  function statement() {
-    if (match("FOR")) return forStatement();
-    if (match("IF")) return ifStatement();
-    if (match("LOG")) return logStatement();
-    if (match("RETURN")) return returnStatement();
-    if (match("WHILE")) return whileStatement();
-    if (match("DO")) return doStatement();
-    if (match("LEFT_BRACE")) return new Stmt().Block(block());
-    return expressionStatement();
+  statement() {
+    if (this.match("FOR")) return this.forStatement();
+    if (this.match("IF")) return this.ifStatement();
+    if (this.match("LOG")) return this.logStatement();
+    if (this.match("RETURN")) return this.returnStatement();
+    if (this.match("WHILE")) return this.whileStatement();
+    if (this.match("DO")) return this.doStatement();
+    if (this.match("LEFT_BRACE")) return new Stmt().Block(this.block());
+    return this.expressionStatement();
   }
 
-  function doStatement() {
-    consume("LEFT_BRACE", "Expect '{' after 'do'");
-    return new Stmt().Block(block());
+  doStatement() {
+    this.consume("LEFT_BRACE", "Expect '{' after 'do'");
+    return new Stmt().Block(this.block());
   }
 
-  function forStatement() {
-    consume("LEFT_PAREN", "Expect '(' after 'for'.");
+  forStatement() {
+    this.consume("LEFT_PAREN", "Expect '(' after 'for'.");
     let initializer;
-    if (match("SEMICOLON")) {
+    if (this.match("SEMICOLON")) {
       initializer = null;
-    } else if (match("LET")) {
-      initializer = varDeclaration();
+    } else if (this.match("LET")) {
+      initializer = this.varDeclaration();
     } else {
-      initializer = expressionStatement();
+      initializer = this.expressionStatement();
     }
 
     let condition = null;
-    if (!check("SEMICOLON")) {
-      condition = expression();
+    if (!this.check("SEMICOLON")) {
+      condition = this.expression();
     }
-    consume("SEMICOLON", "Expect ';' after loop condition.");
+    this.consume("SEMICOLON", "Expect ';' after loop condition.");
     let increment = null;
-    if (!check("RIGHT_PAREN")) {
-      increment = expression();
+    if (!this.check("RIGHT_PAREN")) {
+      increment = this.expression();
     }
-    consume("RIGHT_PAREN", "Expect ')' after for clauses.");
-    let body = statement();
+    this.consume("RIGHT_PAREN", "Expect ')' after for clauses.");
+    let body = this.statement();
 
     if (increment !== null) {
       body = Stmt().Block([body, new Stmt().Expression(increment)]);
@@ -113,184 +117,184 @@ export default function Parser({ tokens, report }: Args) {
     return body;
   }
 
-  function ifStatement() {
-    consume("LEFT_PAREN", "Expect '(' after 'if'.");
-    const condition = expression();
-    consume("RIGHT_PAREN", "Expect ')' after if condition.");
+  ifStatement() {
+    this.consume("LEFT_PAREN", "Expect '(' after 'if'.");
+    const condition = this.expression();
+    this.consume("RIGHT_PAREN", "Expect ')' after if condition.");
 
-    const thenBranch = statement();
+    const thenBranch = this.statement();
     let elseBranch = null;
-    if (match("ELSE")) {
-      elseBranch = statement();
+    if (this.match("ELSE")) {
+      elseBranch = this.statement();
     }
 
     return Stmt().If(condition, thenBranch, elseBranch);
   }
 
-  function logStatement() {
-    const value = expression();
-    consume("SEMICOLON", "Expect ';' after value.");
+  logStatement() {
+    const value = this.expression();
+    this.consume("SEMICOLON", "Expect ';' after value.");
     return Stmt().Log(value);
   }
 
-  function varDeclaration() {
-    const name = consume("IDENTIFIER", "Expect variable name.");
+  varDeclaration() {
+    const name = this.consume("IDENTIFIER", "Expect variable name.");
     let initializer = null;
-    if (match("EQUAL")) {
-      initializer = expression();
+    if (this.match("EQUAL")) {
+      initializer = this.expression();
     }
-    consume("SEMICOLON", "Expect ';' after variable declaration.");
+    this.consume("SEMICOLON", "Expect ';' after variable declaration.");
     return new Stmt().Let(name, initializer);
   }
 
-  function whileStatement() {
-    consume("LEFT_PAREN", "Expect '(' after 'while'.");
-    const condition = expression();
-    consume("RIGHT_PAREN", "Expect ')' after condition.");
-    const body = statement();
+  whileStatement() {
+    this.consume("LEFT_PAREN", "Expect '(' after 'while'.");
+    const condition = this.expression();
+    this.consume("RIGHT_PAREN", "Expect ')' after condition.");
+    const body = this.statement();
     return Stmt().While(condition, body);
   }
 
-  function returnStatement() {
-    const keyword = previous();
+  returnStatement() {
+    const keyword = this.previous();
     let value = null;
-    if (!check("SEMICOLON")) {
-      value = expression();
+    if (!this.check("SEMICOLON")) {
+      value = this.expression();
     }
-    consume("SEMICOLON", "Expect ';' after return value.");
+    this.consume("SEMICOLON", "Expect ';' after return value.");
     return new Stmt().Return(keyword, value);
   }
 
-  function expressionStatement() {
-    const expr = expression();
-    consume("SEMICOLON", "Expect ';' after expression.");
+  expressionStatement() {
+    const expr = this.expression();
+    this.consume("SEMICOLON", "Expect ';' after expression.");
     return Stmt().Expression(expr);
   }
 
-  function block() {
+  block() {
     let statements = [];
-    while (!check("RIGHT_BRACE") && !isAtEnd()) {
-      statements.push(declaration());
+    while (!this.check("RIGHT_BRACE") && !this.isAtEnd()) {
+      statements.push(this.declaration());
     }
 
-    consume("RIGHT_BRACE", "Expect '}' after block.");
+    this.consume("RIGHT_BRACE", "Expect '}' after block.");
 
     return statements;
   }
 
-  function assignment() {
-    const expr = or();
-    if (match("EQUAL")) {
-      const equals = previous();
-      const value = assignment();
+  assignment() {
+    const expr = this.or();
+    if (this.match("EQUAL")) {
+      const equals = this.previous();
+      const value = this.assignment();
 
       if (expr && expr.isVariable) {
         const name = expr.name;
         return Expr().Assign(name, value);
       }
 
-      report.tokenError(equals, "Invalid assignment target");
+      this.report.tokenError(equals, "Invalid assignment target");
     }
 
     return expr;
   }
 
-  function or() {
-    let expr = and();
-    while (match("OR")) {
-      const operator = previous();
-      const right = and();
+  or() {
+    let expr = this.and();
+    while (this.match("OR")) {
+      const operator = this.previous();
+      const right = this.and();
       expr = Expr().Logical(expr, operator, right);
     }
 
     return expr;
   }
 
-  function and() {
-    let expr = equality();
+  and() {
+    let expr = this.equality();
 
-    while (match("AND")) {
-      const operator = previous();
-      const right = equality();
+    while (this.match("AND")) {
+      const operator = this.previous();
+      const right = this.equality();
       expr = Expr().Logical(expr, operator, right);
     }
     return expr;
   }
 
-  function equality() {
-    let expr = comparison();
-    while (match("BANG_EQUAL", "EQUAL_EQUAL")) {
-      const operator = previous();
-      const right = comparison();
+  equality() {
+    let expr = this.comparison();
+    while (this.match("BANG_EQUAL", "EQUAL_EQUAL")) {
+      const operator = this.previous();
+      const right = this.comparison();
       expr = Expr().Binary(expr, operator, right);
     }
 
     return expr;
   }
 
-  function comparison() {
-    let expr = addition();
-    while (match("GREATER", "GREATER_EQUAL", "LESS", "LESS_EQUAL")) {
-      const operator = previous();
-      const right = addition();
+  comparison() {
+    let expr = this.addition();
+    while (this.match("GREATER", "GREATER_EQUAL", "LESS", "LESS_EQUAL")) {
+      const operator = this.previous();
+      const right = this.addition();
       expr = Expr().Binary(expr, operator, right);
     }
 
     return expr;
   }
 
-  function addition() {
-    let expr = multiplication();
+  addition() {
+    let expr = this.multiplication();
 
-    while (match("MINUS", "PLUS")) {
-      const operator = previous();
-      const right = multiplication();
+    while (this.match("MINUS", "PLUS")) {
+      const operator = this.previous();
+      const right = this.multiplication();
       expr = Expr().Binary(expr, operator, right);
     }
 
     return expr;
   }
 
-  function multiplication() {
-    let expr = unary();
-    while (match("SLASH", "STAR")) {
-      const operator = previous();
-      const right = unary();
+  multiplication() {
+    let expr = this.unary();
+    while (this.match("SLASH", "STAR")) {
+      const operator = this.previous();
+      const right = this.unary();
       expr = Expr().Binary(expr, operator, right);
     }
 
     return expr;
   }
 
-  function unary() {
-    if (match("BANG", "MINUS")) {
-      const operator = previous();
-      const right = unary();
+  unary() {
+    if (this.match("BANG", "MINUS")) {
+      const operator = this.previous();
+      const right = this.unary();
       return Expr().Unary(operator, right);
     }
-    return call();
+    return this.call();
   }
 
-  function finishCall(calle) {
+  finishCall(calle) {
     let args = [];
-    if (!check("RIGHT_PAREN")) {
+    if (!this.check("RIGHT_PAREN")) {
       do {
         if (args.length > 255) {
           console.error("Cannot have more than 255 arguments");
         }
-        args.push(expression());
-      } while (match("COMMA"));
+        args.push(this.expression());
+      } while (this.match("COMMA"));
     }
-    const paren = consume("RIGHT_PAREN", "Expect ')' after arguments.");
+    const paren = this.consume("RIGHT_PAREN", "Expect ')' after arguments.");
     return new Expr().Call(calle, paren, args);
   }
 
-  function call() {
-    let expr = primary();
+  call() {
+    let expr = this.primary();
 
     while (true) {
-      if (match("LEFT_PAREN")) {
-        expr = finishCall(expr);
+      if (this.match("LEFT_PAREN")) {
+        expr = this.finishCall(expr);
       } else {
         break;
       }
@@ -298,67 +302,67 @@ export default function Parser({ tokens, report }: Args) {
     return expr;
   }
 
-  function primary() {
-    if (match("FALSE")) return Expr().Literal(false);
-    if (match("TRUE")) return Expr().Literal(true);
-    if (match("NIL")) return Expr().Literal(null);
-    if (match("NUMBER", "STRING")) {
-      return Expr().Literal(previous().literal);
+  primary() {
+    if (this.match("FALSE")) return Expr().Literal(false);
+    if (this.match("TRUE")) return Expr().Literal(true);
+    if (this.match("NIL")) return Expr().Literal(null);
+    if (this.match("NUMBER", "STRING")) {
+      return Expr().Literal(this.previous().literal);
     }
-    if (match("IDENTIFIER")) return Expr().Variable(previous());
+    if (this.match("IDENTIFIER")) return Expr().Variable(this.previous());
 
-    if (match("LEFT_PAREN")) {
-      const expr = expression();
-      consume("RIGHT_PAREN", "Expect ')' after expression");
+    if (this.match("LEFT_PAREN")) {
+      const expr = this.expression();
+      this.consume("RIGHT_PAREN", "Expect ')' after expression");
       return Expr().Grouping(expr);
     }
 
-    report.tokenError(peek(), "Expect expression");
+    this.report.tokenError(this.peek(), "Expect expression");
   }
 
-  function consume(token: TokenType, message: string) {
-    if (check(token)) return advance();
-    report.tokenError(peek(), message);
+  consume(token: TokenType, message: string) {
+    if (this.check(token)) return this.advance();
+    this.report.tokenError(this.peek(), message);
   }
 
-  function match(...types: Array<TokenType>) {
+  match(...types: Array<TokenType>) {
     for (const type of types) {
-      if (check(type)) {
-        advance();
+      if (this.check(type)) {
+        this.advance();
         return true;
       }
     }
     return false;
   }
 
-  function check(type) {
-    if (isAtEnd()) return false;
-    return peek().type === type;
+  check(type) {
+    if (this.isAtEnd()) return false;
+    return this.peek().type === type;
   }
 
-  function advance() {
-    if (!isAtEnd()) current++;
-    return previous();
+  advance() {
+    if (!this.isAtEnd()) this.current++;
+    return this.previous();
   }
 
-  function isAtEnd() {
-    return peek().type === "EOF";
+  isAtEnd() {
+    return this.peek().type === "EOF";
   }
 
-  function peek() {
-    return tokens[current];
+  peek() {
+    return this.tokens[this.current];
   }
 
-  function previous() {
-    return tokens[current - 1];
+  previous() {
+    return this.tokens[this.current - 1];
   }
 
-  function synchronize() {
-    advance();
-    while (!isAtEnd()) {
-      if (previous().type == "SEMICOLON") return;
+  synchronize() {
+    this.advance();
+    while (!this.isAtEnd()) {
+      if (this.previous().type == "SEMICOLON") return;
 
-      switch (peek().type) {
+      switch (this.peek().type) {
         case "LET":
         case "IF":
         case "WHILE":
@@ -369,11 +373,20 @@ export default function Parser({ tokens, report }: Args) {
           return;
       }
 
-      advance();
+      this.advance();
     }
   }
+}
+
+type Args = {
+  tokens: Token[],
+  report: Reporter,
+};
+
+export function NewParser({ tokens, report }: Args) {
+  const parser = new Parser({ tokens, report });
 
   return {
-    parse,
+    parseTokens: parser.parse,
   };
 }
