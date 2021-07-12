@@ -3,24 +3,25 @@ import Environment from "./environment";
 import type { EnvironmentType } from "./environment";
 import type { TokenReturnType } from "./token";
 import type { StmtType } from "./stmt";
-import type { ToxReturnType } from "./tox";
 
 export type DeclarationType = {
   name: TokenReturnType,
   params: Array<TokenReturnType>,
   body: Array<StmtType>,
 };
+
+type ReportRunTimeError = (TokenReturnType, string) => void;
+
+type Report = {
+  runtimeError: ReportRunTimeError,
+};
 type Props = {
   declaration: DeclarationType,
-  toxInstance: ToxReturnType,
+  report: Report,
   closure: EnvironmentType,
 };
 
-export default function LoxFunction({
-  declaration,
-  toxInstance,
-  closure,
-}: Props) {
+export default function LoxFunction({ declaration, report, closure }: Props) {
   function arity() {
     return declaration.params.length;
   }
@@ -31,7 +32,7 @@ export default function LoxFunction({
     args: Array<any>
   ) {
     const environment = new Environment({
-      toxInstance,
+      report,
       enclosing: closure,
     });
     for (let i = 0; i < declaration.params.length; i++) {

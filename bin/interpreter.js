@@ -3,7 +3,6 @@ import Environment, { type EnvironmentType } from "./environment";
 
 import { type TokenType, type TokenReturnType } from "./token";
 import { type ExprType } from "./expr";
-import { type ToxReturnType } from "./tox";
 import loxFunction, { type DeclarationType } from "./toxfunction";
 
 export type InterpreterReturnType = {|
@@ -82,14 +81,21 @@ type GenericAcceptObject<T> = {
   accept: (InterPreterFunctions) => T,
 };
 
+type ReportRunTimeError = (TokenReturnType, string) => void;
+
+type Report = {
+  runtimeError: ReportRunTimeError,
+};
+
+type Args = {
+  report: Report,
+  logger?: (any) => void,
+};
 export default function Interpreter({
-  toxInstance,
-  logFn = console.log,
-}: {
-  toxInstance: ToxReturnType,
-  logFn?: (any) => void,
-}): InterpreterReturnType {
-  const globals: EnvironmentType = Environment({ toxInstance });
+  report,
+  logger = console.log,
+}: Args): InterpreterReturnType {
+  const globals: EnvironmentType = Environment({ report });
   let environment: EnvironmentType = globals;
 
   function visitLiteralExpression(expr) {
@@ -155,7 +161,7 @@ export default function Interpreter({
           return String(left) + String(right);
         }
 
-        toxInstance.runtimeError(
+        report.runtimeError(
           expr.operator,
           "Operands must be two numbers or two strings."
         );
@@ -223,11 +229,11 @@ export default function Interpreter({
     }
 
     if (!callee.arity)
-      return toxInstance.runtimeError(expr.paren, "Can only call functions");
+      return report.runtimeError(expr.paren, "Can only call functions");
 
     const fn = callee;
     if (expressionargs.length !== fn.arity()) {
-      return toxInstance.runtimeError(
+      return report.runtimeError(
         expr.paren,
         "Expected " + // $FlowFixMe
           fn.arity() +
@@ -250,7 +256,7 @@ export default function Interpreter({
   function visitFunctionStatement(stmt: DeclarationType) {
     const fn = loxFunction({
       declaration: stmt,
-      toxInstance,
+      report,
       closure: environment,
     });
     environment.define(stmt.name.lexeme, fn);
@@ -266,7 +272,7 @@ export default function Interpreter({
 
   function visitLogStatement(stmt: { expression: GenericAcceptObject<mixed> }) {
     const value = evaluate(stmt.expression);
-    logFn(stringify(value));
+    logger(stringify(value));
     return null;
   }
 
@@ -288,7 +294,7 @@ export default function Interpreter({
   }) {
     executeBlock(
       stmt.statements,
-      new Environment({ toxInstance, enclosing: environment })
+      new Environment({ report, enclosing: environment })
     );
     return null;
   }
@@ -344,7 +350,7 @@ export default function Interpreter({
     operand: number | string
   ) {
     if (typeof operand === "number") return;
-    toxInstance.runtimeError(operator, "Operand must be a number");
+    report.runtimeError(operator, "Operand must be a number");
   }
 
   function checkNumberOperands(
@@ -353,7 +359,7 @@ export default function Interpreter({
     right: number | string
   ) {
     if (typeof left === "number" && typeof right === "number") return;
-    toxInstance.runtimeError(operator, "Operands must be a number");
+    report.runtimeError(operator, "Operands must be a number");
   }
 
   const interpreterFunctions: InterPreterFunctions = {

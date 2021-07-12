@@ -1,5 +1,4 @@
 // @flow
-import type { ToxReturnType } from "./tox";
 import type { TokenReturnType } from "./token";
 
 export type EnvironmentType = {|
@@ -8,13 +7,21 @@ export type EnvironmentType = {|
   get: (name: TokenReturnType) => void | any,
   environmentMap: { [string]: mixed },
 |};
-export default function Environment({
-  toxInstance,
-  enclosing,
-}: {
-  toxInstance: ToxReturnType,
+
+type ReportRunTimeError = (TokenReturnType, string) => void;
+
+type Report = {
+  runtimeError: ReportRunTimeError,
+};
+
+type Args = {
+  report: Report,
   enclosing?: EnvironmentType,
-}): EnvironmentType {
+};
+export default function Environment({
+  report,
+  enclosing,
+}: Args): EnvironmentType {
   let environmentMap: { [string]: mixed } = {};
 
   function define(name: string, value: mixed) {
@@ -26,7 +33,7 @@ export default function Environment({
       return environmentMap[name.lexeme];
     }
     if (enclosing != null) return enclosing.get(name);
-    toxInstance.runtimeError(name, `Undefined variable " ${name.lexeme} " .`);
+    report.runtimeError(name, `Undefined variable " ${name.lexeme} " .`);
   }
 
   function assign(name: TokenReturnType, value: mixed) {
@@ -40,7 +47,7 @@ export default function Environment({
       return;
     }
 
-    toxInstance.runtimeError(name, `Undefined variable " ${name.lexeme} " .`);
+    report.runtimeError(name, `Undefined variable " ${name.lexeme} " .`);
   }
 
   return { define, get, assign, environmentMap };

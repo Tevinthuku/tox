@@ -1,15 +1,15 @@
 // @flow
 
 import { Token, type TokenType } from "./token";
-import { type ToxReturnType } from "./tox";
 
-export function Scanner({
-  source,
-  toxInstance,
-}: {
+type ReportError = (line: number, message: string) => void;
+
+type Args = {
   source: string,
-  toxInstance: ToxReturnType,
-}): {|
+  reportError: ReportError,
+};
+
+export function Scanner({ source, reportError }: Args): {|
   scanTokens: () => Array<
     | any
     | {|
@@ -110,7 +110,7 @@ export function Scanner({
 
           // Unterminated multiline comments.
           if (isAtEnd()) {
-            toxInstance.error(line, "Unterminated multiline comment.");
+            reportError(line, "Unterminated multiline comment.");
             break;
           }
           current += 2;
@@ -136,7 +136,7 @@ export function Scanner({
         } else if (isAlpha(c)) {
           identifier();
         } else {
-          toxInstance.error(line, "Unexpected character");
+          reportError(line, "Unexpected character");
         }
       }
     }
@@ -182,7 +182,7 @@ export function Scanner({
     }
 
     if (isAtEnd()) {
-      toxInstance.error(line, "Unterminated string.");
+      reportError(line, "Unterminated string.");
       return;
     }
 

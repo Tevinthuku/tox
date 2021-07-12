@@ -4,15 +4,17 @@ import { type TokenReturnType, type TokenType } from "./token";
 import Expr from "./expr";
 import Stmt from "./stmt";
 
-import { type ToxReturnType } from "./tox";
+type ReporterMethods = {
+  runtimeError: (token: TokenReturnType, message: string) => void,
+  tokenError: (token: TokenReturnType, message: string) => void,
+};
 
-export default function Parser({
-  tokens,
-  toxInstance,
-}: {
+type Args = {
   tokens: Array<TokenReturnType> | Array<any>,
-  toxInstance: ToxReturnType,
-}) {
+  report: ReporterMethods,
+};
+
+export default function Parser({ tokens, report }: Args) {
   let current = 0;
   function parse() {
     let statements = [];
@@ -46,10 +48,7 @@ export default function Parser({
     if (!check("RIGHT_PAREN")) {
       do {
         if (parameters.length > 255) {
-          toxInstance.runtimeError(
-            peek(),
-            "Cannot have more than 255 parameters"
-          );
+          report.runtimeError(peek(), "Cannot have more than 255 parameters");
         }
         parameters.push(consume("IDENTIFIER", "Expect parameter name"));
       } while (match("COMMA"));
@@ -190,7 +189,7 @@ export default function Parser({
         return Expr().Assign(name, value);
       }
 
-      toxInstance.tokenError(equals, "Invalid assignment target");
+      report.tokenError(equals, "Invalid assignment target");
     }
 
     return expr;
@@ -314,12 +313,12 @@ export default function Parser({
       return Expr().Grouping(expr);
     }
 
-    toxInstance.tokenError(peek(), "Expect expression");
+    report.tokenError(peek(), "Expect expression");
   }
 
   function consume(token: TokenType, message: string) {
     if (check(token)) return advance();
-    toxInstance.tokenError(peek(), message);
+    report.tokenError(peek(), message);
   }
 
   function match(...types: Array<TokenType>) {
