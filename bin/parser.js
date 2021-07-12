@@ -71,7 +71,7 @@ class Parser {
     if (this.match("RETURN")) return this.returnStatement();
     if (this.match("WHILE")) return this.whileStatement();
     if (this.match("DO")) return this.doStatement();
-    if (this.match("LEFT_BRACE")) return new Stmt().Block(this.block());
+    if (this.match("LEFT_BRACE")) return new Stmt.Block(this.block());
     return this.expressionStatement();
   }
 
