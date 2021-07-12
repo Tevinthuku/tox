@@ -69,11 +69,25 @@ interface Visitor {
     operator: Token,
     right: VisitableExpression,
   }) => void;
+  visitBinaryExpression: ({
+    left: VisitableExpression,
+    operator: Token,
+    right: VisitableExpression,
+  }) => void;
+  visitLogicalExpression: ({
+    left: VisitableExpression,
+    operator: Token,
+    right: VisitableExpression,
+  }) => void;
 }
 
 export default class Expression {
-  static Binary(left: any, operator: Token, right: any) {
-    const accept = (visitor: { visitBinaryExpression: (Object) => any }) => {
+  static Binary(
+    left: VisitableExpression,
+    operator: Token,
+    right: VisitableExpression
+  ) {
+    const accept = (visitor: Visitor) => {
       return visitor.visitBinaryExpression({ left, operator, right });
     };
     return { accept };
@@ -95,8 +109,8 @@ export default class Expression {
     return { accept };
   }
 
-  static Grouping(expression: any) {
-    const accept = (visitor: { visitGroupingExpression: (Object) => any }) => {
+  static Grouping(expression: VisitableExpression) {
+    const accept = (visitor: Visitor) => {
       return visitor.visitGroupingExpression({ expression });
     };
 
@@ -119,8 +133,12 @@ export default class Expression {
     return { accept };
   }
 
-  static Logical(left: any, operator: any, right: any) {
-    const accept = (visitor: { visitLogicalExpression: (Object) => any }) => {
+  static Logical(
+    left: VisitableExpression,
+    operator: Token,
+    right: VisitableExpression
+  ) {
+    const accept = (visitor: Visitor) => {
       return visitor.visitLogicalExpression({ left, operator, right });
     };
 
