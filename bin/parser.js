@@ -322,7 +322,7 @@ class Parser {
 
   consume(token: TokenType, message: string) {
     if (this.check(token)) return this.advance();
-    this.report.tokenError(this.peek(), message);
+    throw this.report.tokenError(this.peek(), message);
   }
 
   match(...types: Array<TokenType>) {
