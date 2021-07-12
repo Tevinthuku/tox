@@ -45,7 +45,7 @@ class Parser {
     const name = this.consume("IDENTIFIER", "Expect " + kind + " name.");
     this.consume("LEFT_PAREN", "Expect '(' after " + kind + " name.");
 
-    let parameters = [];
+    let parameters: Token[] = [];
     if (!this.check("RIGHT_PAREN")) {
       do {
         if (parameters.length > 255) {
@@ -61,7 +61,7 @@ class Parser {
     this.consume("RIGHT_PAREN", "Expect ')' after parameters.");
     this.consume("LEFT_BRACE", "Expect '{' before " + kind + " body.");
     const body = this.block();
-    return Stmt().Fn(name, parameters, body);
+    return Stmt.Fn(name, parameters, body);
   }
 
   statement() {
@@ -172,9 +172,10 @@ class Parser {
   }
 
   block() {
-    let statements = [];
+    let statements: Token[] = [];
     while (!this.check("RIGHT_BRACE") && !this.isAtEnd()) {
-      statements.push(this.declaration());
+      const statement = this.declaration();
+      if (statement) statements.push(statement);
     }
 
     this.consume("RIGHT_BRACE", "Expect '}' after block.");

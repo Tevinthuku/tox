@@ -73,8 +73,16 @@ export type StmtType = {|
   Fn: FnStatement,
   Return: ReturnStatement,
 |};
-export default function Stmt(): StmtType {
-  function Expression(expression: any) {
+
+interface Visitor {
+  visitFunctionStatement({
+    name: Token,
+    params: Token[],
+    body: Token[],
+  }): void;
+}
+export default class Stmt {
+  static Expression(expression: any) {
     const accept = (visitor: { visitExpressionStatement: (Object) => any }) => {
       return visitor.visitExpressionStatement({ expression });
     };
@@ -82,7 +90,7 @@ export default function Stmt(): StmtType {
     return { accept };
   }
 
-  function Log(expression: any) {
+  static Log(expression: any) {
     const accept = (visitor: { visitLogStatement: (Object) => any }) => {
       return visitor.visitLogStatement({ expression });
     };
@@ -90,7 +98,7 @@ export default function Stmt(): StmtType {
     return { accept };
   }
 
-  function Let(name: any, initializer: any) {
+  static Let(name: any, initializer: any) {
     const accept = (visitor: { visitLetStatement: (any) => any }) => {
       return visitor.visitLetStatement({ name, initializer });
     };
@@ -98,7 +106,7 @@ export default function Stmt(): StmtType {
     return { accept };
   }
 
-  function Block(statements) {
+  static Block(statements: Token[]) {
     const accept = (visitor: { visitBlockStatement: (any) => any }) => {
       return visitor.visitBlockStatement({ statements });
     };
@@ -106,7 +114,7 @@ export default function Stmt(): StmtType {
     return { accept };
   }
 
-  function If(condition: any, thenBranch: any, elseBranch: any) {
+  static If(condition: any, thenBranch: any, elseBranch: any) {
     const accept = (visitor: { visitIfStatement: (any) => any }) => {
       return visitor.visitIfStatement({ condition, thenBranch, elseBranch });
     };
@@ -114,7 +122,7 @@ export default function Stmt(): StmtType {
     return { accept };
   }
 
-  function While(condition: any, body: any) {
+  static While(condition: any, body: any) {
     const accept = (visitor: { visitWhileStatement: (any) => any }) => {
       return visitor.visitWhileStatement({ condition, body });
     };
@@ -122,21 +130,19 @@ export default function Stmt(): StmtType {
     return { accept };
   }
 
-  function Fn(name: any, params: any, body: any) {
-    const accept = (visitor: { visitFunctionStatement: (any) => any }) => {
+  static Fn(name: Token, params: Token[], body: Token[]) {
+    const accept = (visitor: Visitor) => {
       return visitor.visitFunctionStatement({ name, params, body });
     };
 
     return { accept };
   }
 
-  function Return(keyword, value) {
+  static Return(keyword, value) {
     const accept = (visitor: { visitReturnStatement: (any) => any }) => {
       return visitor.visitReturnStatement({ keyword, value });
     };
 
     return { accept };
   }
-
-  return { Expression, Log, Let, Block, If, While, Fn, Return };
 }
