@@ -1,7 +1,7 @@
 // @flow
 
 import { Token, type TokenType } from "./token";
-import Expr, { type VisitableExpression } from "./expr";
+import Expr, { type VisitableExpression, Variable } from "./expr";
 import Stmt from "./stmt";
 
 type Reporter = {
@@ -188,8 +188,7 @@ class Parser {
     if (this.match("EQUAL")) {
       const equals = this.previous();
       const value = this.assignment();
-
-      if (expr && expr.isVariable) {
+      if (expr instanceof Variable) {
         const name = expr.name;
         return Expr.Assign(name, value);
       }
