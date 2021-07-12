@@ -52,6 +52,25 @@ export type ExprType = {|
   Logical: LogicalExpression,
   Call: CallExpression,
 |};
+
+type LiteralValueType = boolean | string | null | number | void;
+export type VisitableExpression = { accept: (visitor: Visitor) => void };
+interface Visitor {
+  visitAssignmentExpression: ({ name: Token, value: any }) => void;
+  visitLiteralExpression: ({ value: LiteralValueType }) => void;
+  visitVariableExpression: ({ name: Token }) => void;
+  visitGroupingExpression: ({ expression: VisitableExpression }) => void;
+  visitCallExpression: ({
+    calle: VisitableExpression,
+    paren: Token,
+    args: VisitableExpression[],
+  }) => void;
+  visitUnaryExpression: ({
+    operator: Token,
+    right: VisitableExpression,
+  }) => void;
+}
+
 export default class Expression {
   static Binary(left: any, operator: Token, right: any) {
     const accept = (visitor: { visitBinaryExpression: (Object) => any }) => {
@@ -60,16 +79,16 @@ export default class Expression {
     return { accept };
   }
 
-  static Unary(operator: Token, right: any) {
-    const accept = (visitor: { visitUnaryExpression: (Object) => any }) => {
+  static Unary(operator: Token, right: VisitableExpression) {
+    const accept = (visitor: Visitor) => {
       return visitor.visitUnaryExpression({ operator, right });
     };
 
     return { accept };
   }
 
-  static Literal(value: any) {
-    const accept = (visitor: { visitLiteralExpression: (Object) => any }) => {
+  static Literal(value: LiteralValueType) {
+    const accept = (visitor: Visitor) => {
       return visitor.visitLiteralExpression({ value });
     };
 
@@ -84,18 +103,16 @@ export default class Expression {
     return { accept };
   }
 
-  static Variable(name: any) {
-    const accept = (visitor: { visitVariableExpression: (Object) => any }) => {
+  static Variable(name: Token) {
+    const accept = (visitor: Visitor) => {
       return visitor.visitVariableExpression({ name });
     };
 
     return { accept, isVariable: true, name };
   }
 
-  static Assign(name, value) {
-    const accept = (visitor: {
-      visitAssignmentExpression: (Object) => any,
-    }) => {
+  static Assign(name: Token, value: any) {
+    const accept = (visitor: Visitor) => {
       return visitor.visitAssignmentExpression({ name, value });
     };
 
@@ -110,12 +127,12 @@ export default class Expression {
     return { accept };
   }
 
-  static Call(calle: any, paren: any, args: any) {
-    const accept = (visitor: {
-      visitCallExpression: (Object) => {
-        arity: () => number,
-      },
-    }) => {
+  static Call(
+    calle: VisitableExpression,
+    paren: Token,
+    args: VisitableExpression[]
+  ) {
+    const accept = (visitor: Visitor) => {
       return visitor.visitCallExpression({ calle, paren, args });
     };
 

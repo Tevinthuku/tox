@@ -43,12 +43,12 @@ export type TokenType =
 export class Token {
   type: TokenType;
   lexeme: string;
-  literal: null | string | number | void;
+  literal: null | string | number;
   line: number;
   constructor(
     type: TokenType,
     lexeme: string,
-    literal: null | string | number | void,
+    literal: null | string | number,
     line: number
   ) {
     this.type = type;

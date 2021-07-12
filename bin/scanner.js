@@ -208,7 +208,7 @@ class ScannerImpl {
     return this.source[this.current - 1];
   }
 
-  addToken(type: TokenType, literal) {
+  addToken(type: TokenType, literal = null) {
     const text = this.source.substring(this.start, this.current);
     this.tokens.push(new Token(type, text, literal, this.line));
   }

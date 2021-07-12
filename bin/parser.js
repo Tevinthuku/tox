@@ -1,7 +1,7 @@
 // @flow
 
 import { Token, type TokenType } from "./token";
-import Expr from "./expr";
+import Expr, { type VisitableExpression } from "./expr";
 import Stmt from "./stmt";
 
 type Reporter = {
@@ -191,7 +191,7 @@ class Parser {
 
       if (expr && expr.isVariable) {
         const name = expr.name;
-        return Expr().Assign(name, value);
+        return Expr.Assign(name, value);
       }
 
       throw this.report.tokenError(equals, "Invalid assignment target");
@@ -205,7 +205,7 @@ class Parser {
     while (this.match("OR")) {
       const operator = this.previous();
       const right = this.and();
-      expr = Expr().Logical(expr, operator, right);
+      expr = Expr.Logical(expr, operator, right);
     }
 
     return expr;
@@ -217,7 +217,7 @@ class Parser {
     while (this.match("AND")) {
       const operator = this.previous();
       const right = this.equality();
-      expr = Expr().Logical(expr, operator, right);
+      expr = Expr.Logical(expr, operator, right);
     }
     return expr;
   }
@@ -227,7 +227,7 @@ class Parser {
     while (this.match("BANG_EQUAL", "EQUAL_EQUAL")) {
       const operator = this.previous();
       const right = this.comparison();
-      expr = Expr().Binary(expr, operator, right);
+      expr = Expr.Binary(expr, operator, right);
     }
 
     return expr;
@@ -238,7 +238,7 @@ class Parser {
     while (this.match("GREATER", "GREATER_EQUAL", "LESS", "LESS_EQUAL")) {
       const operator = this.previous();
       const right = this.addition();
-      expr = Expr().Binary(expr, operator, right);
+      expr = Expr.Binary(expr, operator, right);
     }
 
     return expr;
@@ -250,7 +250,7 @@ class Parser {
     while (this.match("MINUS", "PLUS")) {
       const operator = this.previous();
       const right = this.multiplication();
-      expr = Expr().Binary(expr, operator, right);
+      expr = Expr.Binary(expr, operator, right);
     }
 
     return expr;
@@ -261,22 +261,22 @@ class Parser {
     while (this.match("SLASH", "STAR")) {
       const operator = this.previous();
       const right = this.unary();
-      expr = Expr().Binary(expr, operator, right);
+      expr = Expr.Binary(expr, operator, right);
     }
 
     return expr;
   }
 
-  unary() {
+  unary(): VisitableExpression {
     if (this.match("BANG", "MINUS")) {
       const operator = this.previous();
       const right = this.unary();
-      return Expr().Unary(operator, right);
+      return Expr.Unary(operator, right);
     }
     return this.call();
   }
 
-  finishCall(calle) {
+  finishCall(calle: VisitableExpression) {
     let args = [];
     if (!this.check("RIGHT_PAREN")) {
       do {
@@ -287,10 +287,10 @@ class Parser {
       } while (this.match("COMMA"));
     }
     const paren = this.consume("RIGHT_PAREN", "Expect ')' after arguments.");
-    return new Expr().Call(calle, paren, args);
+    return new Expr.Call(calle, paren, args);
   }
 
-  call() {
+  call(): VisitableExpression {
     let expr = this.primary();
 
     while (true) {
@@ -303,22 +303,22 @@ class Parser {
     return expr;
   }
 
-  primary() {
-    if (this.match("FALSE")) return Expr().Literal(false);
-    if (this.match("TRUE")) return Expr().Literal(true);
-    if (this.match("NIL")) return Expr().Literal(null);
+  primary(): VisitableExpression {
+    if (this.match("FALSE")) return Expr.Literal(false);
+    if (this.match("TRUE")) return Expr.Literal(true);
+    if (this.match("NIL")) return Expr.Literal(null);
     if (this.match("NUMBER", "STRING")) {
-      return Expr().Literal(this.previous().literal);
+      return Expr.Literal(this.previous().literal);
     }
-    if (this.match("IDENTIFIER")) return Expr().Variable(this.previous());
+    if (this.match("IDENTIFIER")) return Expr.Variable(this.previous());
 
     if (this.match("LEFT_PAREN")) {
       const expr = this.expression();
       this.consume("RIGHT_PAREN", "Expect ')' after expression");
-      return Expr().Grouping(expr);
+      return Expr.Grouping(expr);
     }
 
-    this.report.tokenError(this.peek(), "Expect expression");
+    throw this.report.tokenError(this.peek(), "Expect expression");
   }
 
   consume(token: TokenType, message: string) {
