@@ -144,7 +144,7 @@ class Parser {
       initializer = this.expression();
     }
     this.consume("SEMICOLON", "Expect ';' after variable declaration.");
-    return new Stmt().Let(name, initializer);
+    return Stmt.Let(name, initializer);
   }
 
   whileStatement() {
@@ -194,7 +194,7 @@ class Parser {
         return Expr().Assign(name, value);
       }
 
-      this.report.tokenError(equals, "Invalid assignment target");
+      throw this.report.tokenError(equals, "Invalid assignment target");
     }
 
     return expr;

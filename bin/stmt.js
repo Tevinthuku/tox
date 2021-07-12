@@ -80,6 +80,10 @@ interface Visitor {
     params: Token[],
     body: Token[],
   }): void;
+  visitLetStatement({
+    name: Token,
+    initializer: any, // TODO: Fix this type.
+  }): void;
 }
 export default class Stmt {
   static Expression(expression: any) {
@@ -98,8 +102,9 @@ export default class Stmt {
     return { accept };
   }
 
-  static Let(name: any, initializer: any) {
-    const accept = (visitor: { visitLetStatement: (any) => any }) => {
+  static Let(name: Token, initializer: any) {
+    // TODO: Fix this initializer type
+    const accept = (visitor: Visitor) => {
       return visitor.visitLetStatement({ name, initializer });
     };
 

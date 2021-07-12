@@ -52,15 +52,15 @@ export type ExprType = {|
   Logical: LogicalExpression,
   Call: CallExpression,
 |};
-export default function Expr(): ExprType {
-  function Binary(left: any, operator: Token, right: any) {
+export default class Expression {
+  static Binary(left: any, operator: Token, right: any) {
     const accept = (visitor: { visitBinaryExpression: (Object) => any }) => {
       return visitor.visitBinaryExpression({ left, operator, right });
     };
     return { accept };
   }
 
-  function Unary(operator: Token, right: any) {
+  static Unary(operator: Token, right: any) {
     const accept = (visitor: { visitUnaryExpression: (Object) => any }) => {
       return visitor.visitUnaryExpression({ operator, right });
     };
@@ -68,7 +68,7 @@ export default function Expr(): ExprType {
     return { accept };
   }
 
-  function Literal(value: any) {
+  static Literal(value: any) {
     const accept = (visitor: { visitLiteralExpression: (Object) => any }) => {
       return visitor.visitLiteralExpression({ value });
     };
@@ -76,7 +76,7 @@ export default function Expr(): ExprType {
     return { accept };
   }
 
-  function Grouping(expression: any) {
+  static Grouping(expression: any) {
     const accept = (visitor: { visitGroupingExpression: (Object) => any }) => {
       return visitor.visitGroupingExpression({ expression });
     };
@@ -84,7 +84,7 @@ export default function Expr(): ExprType {
     return { accept };
   }
 
-  function Variable(name: any) {
+  static Variable(name: any) {
     const accept = (visitor: { visitVariableExpression: (Object) => any }) => {
       return visitor.visitVariableExpression({ name });
     };
@@ -92,7 +92,7 @@ export default function Expr(): ExprType {
     return { accept, isVariable: true, name };
   }
 
-  function Assign(name, value) {
+  static Assign(name, value) {
     const accept = (visitor: {
       visitAssignmentExpression: (Object) => any,
     }) => {
@@ -102,7 +102,7 @@ export default function Expr(): ExprType {
     return { accept };
   }
 
-  function Logical(left: any, operator: any, right: any) {
+  static Logical(left: any, operator: any, right: any) {
     const accept = (visitor: { visitLogicalExpression: (Object) => any }) => {
       return visitor.visitLogicalExpression({ left, operator, right });
     };
@@ -110,7 +110,7 @@ export default function Expr(): ExprType {
     return { accept };
   }
 
-  function Call(calle: any, paren: any, args: any) {
+  static Call(calle: any, paren: any, args: any) {
     const accept = (visitor: {
       visitCallExpression: (Object) => {
         arity: () => number,
@@ -121,6 +121,4 @@ export default function Expr(): ExprType {
 
     return { accept };
   }
-
-  return { Binary, Unary, Literal, Grouping, Variable, Assign, Logical, Call };
 }
