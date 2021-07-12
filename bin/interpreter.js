@@ -2,7 +2,6 @@
 import Environment, { type EnvironmentType } from "./environment";
 
 import { type TokenType, Token } from "./token";
-import { type ExprType } from "./expr";
 import loxFunction, { type DeclarationType } from "./toxfunction";
 
 export type InterpreterReturnType = {|

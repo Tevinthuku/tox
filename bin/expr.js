@@ -2,57 +2,6 @@
 
 import { Token } from "./token";
 
-type VariableExpression = (name: any) => {|
-  accept: (visitor: {
-    visitVariableExpression: (any) => any,
-  }) => any,
-  isVariable: true,
-  name: any,
-|};
-
-type AssignmentExpression = (
-  name: any,
-  value: any
-) => {|
-  accept: (visitor: {
-    visitAssignmentExpression: (any) => any,
-  }) => any,
-|};
-
-type LogicalExpression = (
-  left: any,
-  operator: any,
-  right: any
-) => {|
-  accept: (visitor: {
-    visitLogicalExpression: (any) => any,
-  }) => any,
-|};
-
-type CallExpression = (
-  calle: any,
-  paren: any,
-  args: any
-) => {|
-  accept: (visitor: {
-    visitCallExpression: (any) => {
-      arity: () => number,
-    },
-  }) => {
-    arity: () => number,
-  },
-|};
-export type ExprType = {|
-  Binary: (left: any, operator: Token, right: any) => any,
-  Unary: (operator: Token, right: any) => any,
-  Literal: (value: any) => any,
-  Grouping: (expr: any) => any,
-  Variable: VariableExpression,
-  Assign: AssignmentExpression,
-  Logical: LogicalExpression,
-  Call: CallExpression,
-|};
-
 type LiteralValueType = boolean | string | null | number | void;
 export interface VisitableExpression {
   +accept: (visitor: Visitor) => void;
