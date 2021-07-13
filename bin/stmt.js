@@ -1,142 +1,185 @@
 // @flow
-import type { TokenReturnType } from "./token";
+import { Token } from "./token";
 
-type ExpressionStatement = (expression: any) => {|
-  accept: (visitor: {
-    visitExpressionStatement: (any) => any,
-  }) => any,
-|};
+import { type VisitableExpression } from "./expr";
 
-type LogStatement = (expression: any) => {|
-  accept: (visitor: {
-    visitLogStatement: (any) => any,
-  }) => any,
-|};
+export interface VisitableStatement {
+  +accept: (visitor: Visitor) => void;
+}
 
-type LetStatement = (
-  name: any,
-  initializer: any
-) => {|
-  accept: (visitor: {
-    visitLetStatement: (any) => any,
-  }) => any,
-|};
-
-type BlockStatement = (statements: Array<Object>) => {|
-  accept: (visitor: {
-    visitBlockStatement: (any) => any,
-  }) => any,
-|};
-
-type IfStatement = (
-  condition: any,
-  thenBranch: any,
-  elseBranch: any
-) => {|
-  accept: (visitor: { visitIfStatement: (any) => any }) => any,
-|};
-
-type WhileStatement = (
-  condition: any,
-  body: any
-) => {|
-  accept: (visitor: {
-    visitWhileStatement: (any) => any,
-  }) => any,
-|};
-
-type FnStatement = (
-  name: any,
-  params: any,
-  body: any
-) => {|
-  accept: (visitor: {
-    visitFunctionStatement: (any) => any,
-  }) => any,
-|};
-
-type ReturnStatement = (
-  keyword: any,
-  value: any
-) => {|
-  accept: (visitor: {
-    visitReturnStatement: (any) => any,
-  }) => any,
-|};
-export type StmtType = {|
-  Expression: ExpressionStatement,
-  Log: LogStatement,
-  Let: LetStatement,
-  Block: BlockStatement,
-  If: IfStatement,
-  While: WhileStatement,
-  Fn: FnStatement,
-  Return: ReturnStatement,
-|};
-export default function Stmt(): StmtType {
-  function Expression(expression: any) {
-    const accept = (visitor: { visitExpressionStatement: (Object) => any }) => {
-      return visitor.visitExpressionStatement({ expression });
-    };
-
-    return { accept };
+interface Visitor {
+  visitFunctionStatement({
+    name: Token,
+    params: Token[],
+    body: VisitableStatement[],
+  }): void;
+  visitLetStatement({
+    name: Token,
+    initializer: VisitableExpression | null,
+  }): void;
+  visitExpressionStatement({ expression: VisitableExpression }): void;
+  visitLogStatement({ expression: VisitableExpression }): void;
+  visitBlockStatement({ statements: VisitableStatement[] }): void;
+  visitIfStatement({
+    condition: VisitableExpression,
+    thenBranch: VisitableStatement,
+    elseBranch: VisitableStatement | null,
+  }): void;
+  visitWhileStatement({
+    condition: VisitableExpression,
+    body: VisitableStatement,
+  }): void;
+  visitReturnStatement({ value: VisitableExpression }): void;
+}
+export default class Statement {
+  static Expression(expression: VisitableExpression) {
+    return new ExpressionStatement(expression);
   }
 
-  function Log(expression: any) {
-    const accept = (visitor: { visitLogStatement: (Object) => any }) => {
-      return visitor.visitLogStatement({ expression });
-    };
-
-    return { accept };
+  static Log(expression: VisitableExpression) {
+    return new LogStatement(expression);
   }
 
-  function Let(name: any, initializer: any) {
-    const accept = (visitor: { visitLetStatement: (any) => any }) => {
-      return visitor.visitLetStatement({ name, initializer });
-    };
-
-    return { accept };
+  static Let(name: Token, initializer: VisitableExpression | null) {
+    return new LetStatement(name, initializer);
   }
 
-  function Block(statements) {
-    const accept = (visitor: { visitBlockStatement: (any) => any }) => {
-      return visitor.visitBlockStatement({ statements });
-    };
-
-    return { accept };
+  static Block(statements: VisitableStatement[]) {
+    return new BlockOfStatements(statements);
   }
 
-  function If(condition: any, thenBranch: any, elseBranch: any) {
-    const accept = (visitor: { visitIfStatement: (any) => any }) => {
-      return visitor.visitIfStatement({ condition, thenBranch, elseBranch });
-    };
-
-    return { accept };
+  static If(
+    condition: VisitableExpression,
+    thenBranch: VisitableStatement,
+    elseBranch: VisitableStatement | null
+  ) {
+    return new IfStatement(condition, thenBranch, elseBranch);
   }
 
-  function While(condition: any, body: any) {
-    const accept = (visitor: { visitWhileStatement: (any) => any }) => {
-      return visitor.visitWhileStatement({ condition, body });
-    };
-
-    return { accept };
+  static While(condition: VisitableExpression, body: VisitableStatement) {
+    return new WhileStatement(condition, body);
   }
 
-  function Fn(name: any, params: any, body: any) {
-    const accept = (visitor: { visitFunctionStatement: (any) => any }) => {
-      return visitor.visitFunctionStatement({ name, params, body });
-    };
-
-    return { accept };
+  static Fn(name: Token, params: Token[], body: VisitableStatement[]) {
+    return new FunctionStatement(name, params, body);
   }
 
-  function Return(keyword, value) {
-    const accept = (visitor: { visitReturnStatement: (any) => any }) => {
-      return visitor.visitReturnStatement({ keyword, value });
-    };
+  static Return(value: VisitableExpression) {
+    return new ReturnStatement(value);
+  }
+}
 
-    return { accept };
+export class ExpressionStatement implements VisitableStatement {
+  expression: VisitableExpression;
+  constructor(expression: VisitableExpression) {
+    this.expression = expression;
+  }
+  accept(visitor: Visitor) {
+    return visitor.visitExpressionStatement({ expression: this.expression });
+  }
+}
+
+export class LogStatement implements VisitableStatement {
+  expression: VisitableExpression;
+  constructor(expression: VisitableExpression) {
+    this.expression = expression;
+  }
+  accept(visitor: Visitor) {
+    return visitor.visitLogStatement({ expression: this.expression });
+  }
+}
+
+export class LetStatement implements VisitableStatement {
+  name: Token;
+  initializer: VisitableExpression | null;
+  constructor(name: Token, initializer: VisitableExpression | null) {
+    this.name = name;
+    this.initializer = initializer;
   }
 
-  return { Expression, Log, Let, Block, If, While, Fn, Return };
+  accept(visitor: Visitor) {
+    return visitor.visitLetStatement({
+      name: this.name,
+      initializer: this.initializer,
+    });
+  }
+}
+
+export class BlockOfStatements implements VisitableStatement {
+  statements: VisitableStatement[];
+  constructor(statements: VisitableStatement[]) {
+    this.statements = statements;
+  }
+
+  accept(visitor: Visitor) {
+    return visitor.visitBlockStatement({ statements: this.statements });
+  }
+}
+
+export class IfStatement implements VisitableStatement {
+  condition: VisitableExpression;
+  thenBranch: VisitableStatement;
+  elseBranch: VisitableStatement | null;
+  constructor(
+    condition: VisitableExpression,
+    thenBranch: VisitableStatement,
+    elseBranch: VisitableStatement | null
+  ) {
+    this.condition = condition;
+    this.thenBranch = thenBranch;
+    this.elseBranch = elseBranch;
+  }
+
+  accept(visitor: Visitor) {
+    return visitor.visitIfStatement({
+      condition: this.condition,
+      thenBranch: this.thenBranch,
+      elseBranch: this.elseBranch,
+    });
+  }
+}
+
+export class WhileStatement implements VisitableStatement {
+  condition: VisitableExpression;
+  body: VisitableStatement;
+  constructor(condition: VisitableExpression, body: VisitableStatement) {
+    this.condition = condition;
+    this.body = body;
+  }
+  accept(visitor: Visitor) {
+    return visitor.visitWhileStatement({
+      condition: this.condition,
+      body: this.body,
+    });
+  }
+}
+
+export class FunctionStatement implements VisitableStatement {
+  name: Token;
+  params: Token[];
+  body: VisitableStatement[];
+  constructor(name: Token, params: Token[], body: VisitableStatement[]) {
+    this.name = name;
+    this.params = params;
+    this.body = body;
+  }
+
+  accept(visitor: Visitor) {
+    return visitor.visitFunctionStatement({
+      name: this.name,
+      params: this.params,
+      body: this.body,
+    });
+  }
+}
+
+export class ReturnStatement implements VisitableStatement {
+  value: VisitableExpression;
+  constructor(value: VisitableExpression) {
+    this.value = value;
+  }
+
+  accept(visitor: Visitor) {
+    return visitor.visitReturnStatement({ value: this.value });
+  }
 }

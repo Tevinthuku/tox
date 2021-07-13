@@ -40,29 +40,24 @@ export type TokenType =
   | "DO"
   | "EOF";
 
-export type TokenReturnType = {|
-  lexeme: string,
-  line: number,
-  literal: ?(string | number),
-  toString: () => string,
-  type: TokenType,
-|};
-
-export function Token(
-  type: TokenType,
-  lexeme: string,
-  literal: null | string | number | void,
-  line: number
-): TokenReturnType {
-  function toString() {
-    return type + " " + lexeme + " " + (literal || "");
+export class Token {
+  type: TokenType;
+  lexeme: string;
+  literal: null | string | number;
+  line: number;
+  constructor(
+    type: TokenType,
+    lexeme: string,
+    literal: null | string | number,
+    line: number
+  ) {
+    this.type = type;
+    this.lexeme = lexeme;
+    this.literal = literal;
+    this.line = line;
   }
 
-  return {
-    type,
-    lexeme,
-    literal,
-    line,
-    toString,
-  };
+  toString() {
+    return this.type + " " + this.lexeme + " " + (this.literal || "");
+  }
 }

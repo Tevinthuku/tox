@@ -1,35 +1,42 @@
 // @flow
-import type { ToxReturnType } from "./tox";
-import type { TokenReturnType } from "./token";
+import type { Token } from "./token";
 
 export type EnvironmentType = {|
-  assign: (name: TokenReturnType, value: any) => void,
+  assign: (name: Token, value: any) => void,
   define: (name: string, value: any) => void,
-  get: (name: TokenReturnType) => void | any,
+  get: (name: Token) => void | any,
   environmentMap: { [string]: mixed },
 |};
-export default function Environment({
-  toxInstance,
-  enclosing,
-}: {
-  toxInstance: ToxReturnType,
+
+type ReportRunTimeError = (Token, string) => void;
+
+type Reporter = {
+  runtimeError: ReportRunTimeError,
+};
+
+type Args = {
+  report: Reporter,
   enclosing?: EnvironmentType,
-}): EnvironmentType {
+};
+export default function Environment({
+  report,
+  enclosing,
+}: Args): EnvironmentType {
   let environmentMap: { [string]: mixed } = {};
 
   function define(name: string, value: mixed) {
     environmentMap[name] = value;
   }
 
-  function get(name: TokenReturnType) {
+  function get(name: Token) {
     if (environmentMap.hasOwnProperty(name.lexeme)) {
       return environmentMap[name.lexeme];
     }
     if (enclosing != null) return enclosing.get(name);
-    toxInstance.runtimeError(name, `Undefined variable " ${name.lexeme} " .`);
+    report.runtimeError(name, `Undefined variable " ${name.lexeme} " .`);
   }
 
-  function assign(name: TokenReturnType, value: mixed) {
+  function assign(name: Token, value: mixed) {
     if (environmentMap.hasOwnProperty(name.lexeme)) {
       environmentMap[name.lexeme] = value;
       return;
@@ -40,7 +47,7 @@ export default function Environment({
       return;
     }
 
-    toxInstance.runtimeError(name, `Undefined variable " ${name.lexeme} " .`);
+    report.runtimeError(name, `Undefined variable " ${name.lexeme} " .`);
   }
 
   return { define, get, assign, environmentMap };

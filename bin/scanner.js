@@ -1,32 +1,18 @@
 // @flow
 
 import { Token, type TokenType } from "./token";
-import { type ToxReturnType } from "./tox";
 
-export function Scanner({
-  source,
-  toxInstance,
-}: {
-  source: string,
-  toxInstance: ToxReturnType,
-}): {|
-  scanTokens: () => Array<
-    | any
-    | {|
-        lexeme: string,
-        line: number,
-        literal: null | string,
-        toString: () => string,
-        type: TokenType,
-      |}
-  >,
-|} {
-  let tokens = [];
-  let start = 0;
-  let current = 0;
-  let line = 1;
+type ReportError = (line: number, message: string) => void;
 
-  const keywords: { [string]: TokenType } = {
+class ScannerImpl {
+  tokens: Token[] = [];
+  start = 0;
+  current = 0;
+  line = 1;
+  reportError: ReportError;
+  source: string;
+
+  keywords: { [string]: TokenType } = {
     and: "AND",
     or: "OR",
     else: "ELSE",
@@ -44,78 +30,82 @@ export function Scanner({
     do: "DO",
   };
 
-  function scanTokens() {
-    while (!isAtEnd()) {
-      start = current;
-      scanToken();
-    }
-
-    tokens.push(Token("EOF", "", null, line));
-    return tokens;
+  constructor(source: string, reportError: ReportError) {
+    this.reportError = reportError;
+    this.source = source;
   }
 
-  function scanToken() {
-    const c = advance();
+  scanTokens() {
+    while (!this.isAtEnd()) {
+      this.start = this.current;
+      this.scanToken();
+    }
+
+    this.tokens.push(new Token("EOF", "", null, this.line));
+    return this.tokens;
+  }
+
+  scanToken() {
+    const c = this.advance();
     switch (c) {
       case "(":
-        addToken("LEFT_PAREN");
+        this.addToken("LEFT_PAREN");
         break;
       case ")":
-        addToken("RIGHT_PAREN");
+        this.addToken("RIGHT_PAREN");
         break;
       case "{":
-        addToken("LEFT_BRACE");
+        this.addToken("LEFT_BRACE");
         break;
       case "}":
-        addToken("RIGHT_BRACE");
+        this.addToken("RIGHT_BRACE");
         break;
       case ",":
-        addToken("COMMA");
+        this.addToken("COMMA");
         break;
       case ".":
-        addToken("DOT");
+        this.addToken("DOT");
         break;
       case "-":
-        addToken("MINUS");
+        this.addToken("MINUS");
         break;
       case "+":
-        addToken("PLUS");
+        this.addToken("PLUS");
         break;
       case ";":
-        addToken("SEMICOLON");
+        this.addToken("SEMICOLON");
         break;
       case "*":
-        addToken("STAR");
+        this.addToken("STAR");
         break;
       case "!":
-        addToken(match("=") ? "BANG_EQUAL" : "BANG");
+        this.addToken(this.match("=") ? "BANG_EQUAL" : "BANG");
         break;
       case "=":
-        addToken(match("=") ? "EQUAL_EQUAL" : "EQUAL");
+        this.addToken(this.match("=") ? "EQUAL_EQUAL" : "EQUAL");
         break;
       case "<":
-        addToken(match("=") ? "LESS_EQUAL" : "LESS");
+        this.addToken(this.match("=") ? "LESS_EQUAL" : "LESS");
         break;
       case ">":
-        addToken(match("=") ? "GREATER_EQUAL" : "GREATER");
+        this.addToken(this.match("=") ? "GREATER_EQUAL" : "GREATER");
         break;
       case "/":
-        if (match("/")) {
-          while (peek() !== "\n" && !isAtEnd()) advance();
-        } else if (match("*")) {
-          while ((peek() != "*" || peekNext() != "/") && !isAtEnd()) {
-            if (peek() == "\n") line++;
-            advance();
+        if (this.match("/")) {
+          while (this.peek() !== "\n" && !this.isAtEnd()) this.advance();
+        } else if (this.match("*")) {
+          while (this.stillInMultilineComment()) {
+            if (this.peek() == "\n") this.line++;
+            this.advance();
           }
 
-          // Unterminated multiline comments.
-          if (isAtEnd()) {
-            toxInstance.error(line, "Unterminated multiline comment.");
+          if (this.isUnterminatedMultilineComment()) {
+            this.reportError(this.line, "Unterminated multiline comment.");
             break;
           }
-          current += 2;
+          this.current += 2;
         } else {
-          addToken("SLASH");
+          this.addToken("SLASH");
         }
         break;
       case " ":
@@ -125,106 +115,125 @@ export function Scanner({
         break;
 
       case "\n":
-        line++;
+        this.line++;
         break;
       case '"':
-        string();
+        this.string();
         break;
       default: {
-        if (isDigit(c)) {
-          number();
-        } else if (isAlpha(c)) {
-          identifier();
+        if (this.isDigit(c)) {
+          this.number();
+        } else if (this.isAlpha(c)) {
+          this.identifier();
         } else {
-          toxInstance.error(line, "Unexpected character");
+          this.reportError(this.line, "Unexpected character");
         }
       }
     }
   }
 
-  function identifier() {
-    while (isAlphaNumeric(peek())) advance();
-    const text = source.substring(start, current);
-    const trimmedText = text.trim();
-    let type = keywords[text] || keywords[trimmedText];
-    if (!type) type = "IDENTIFIER";
-    addToken(type);
+  isUnterminatedMultilineComment() {
+    return this.isAtEnd();
   }
 
-  function isAlpha(c: string) {
+  stillInMultilineComment() {
+    return (this.peek() != "*" || this.peekNext() != "/") && !this.isAtEnd();
+  }
+
+  identifier() {
+    while (this.isAlphaNumeric(this.peek())) this.advance();
+    const text = this.source.substring(this.start, this.current);
+    const trimmedText = text.trim();
+    let type = this.keywords[text] || this.keywords[trimmedText];
+    if (!type) type = "IDENTIFIER";
+    this.addToken(type);
+  }
+
+  isAlpha(c: string) {
     return c === "_" || Boolean(c.match(/^[A-Za-z]+$/));
   }
 
-  function isAlphaNumeric(c) {
-    return isDigit(c) || isAlpha(c);
+  isAlphaNumeric(c) {
+    return this.isDigit(c) || this.isAlpha(c);
   }
 
-  function isDigit(c) {
+  isDigit(c) {
     return !isNaN(parseInt(c, 10));
   }
 
-  function number() {
-    while (isDigit(peek())) advance();
+  number() {
+    while (this.isDigit(this.peek())) this.advance();
 
-    if (peek() == "." && isDigit(peekNext())) {
-      advance();
+    if (this.peek() == "." && this.isDigit(this.peekNext())) {
+      this.advance();
 
-      while (isDigit(peek())) advance();
+      while (this.isDigit(this.peek())) this.advance();
     }
 
-    addToken("NUMBER", parseInt(source.substring(start, current)));
+    this.addToken(
+      "NUMBER",
+      parseInt(this.source.substring(this.start, this.current))
+    );
   }
 
-  function string() {
-    while (peek() !== `"` && !isAtEnd()) {
-      if (peek() === "\n") line++;
-      advance();
+  string() {
+    while (this.peek() !== `"` && !this.isAtEnd()) {
+      if (this.peek() === "\n") this.line++;
+      this.advance();
     }
 
-    if (isAtEnd()) {
-      toxInstance.error(line, "Unterminated string.");
+    if (this.isAtEnd()) {
+      this.reportError(this.line, "Unterminated string.");
       return;
     }
 
-    advance();
+    this.advance();
 
-    const strValue = source.substring(start + 1, current - 1);
-    addToken("STRING", strValue);
+    const strValue = this.source.substring(this.start + 1, this.current - 1);
+    this.addToken("STRING", strValue);
   }
 
-  function peek() {
-    if (isAtEnd()) return "\0";
-    return source.charAt(current);
+  peek() {
+    if (this.isAtEnd()) return "\0";
+    return this.source.charAt(this.current);
   }
 
-  function peekNext() {
-    if (isAtEnd()) return "\0";
-    return source.charAt(current + 1);
+  peekNext() {
+    if (this.isAtEnd()) return "\0";
+    return this.source.charAt(this.current + 1);
   }
 
-  function advance() {
-    current++;
-    return source[current - 1];
+  advance() {
+    this.current++;
+    return this.source[this.current - 1];
   }
 
-  function addToken(type: TokenType, literal) {
-    const text = source.substring(start, current);
-    tokens.push(Token(type, text, literal, line));
+  addToken(type: TokenType, literal = null) {
+    const text = this.source.substring(this.start, this.current);
+    this.tokens.push(new Token(type, text, literal, this.line));
   }
 
-  function isAtEnd() {
-    return current >= source.length;
+  isAtEnd() {
+    return this.current >= this.source.length;
   }
 
-  function match(c) {
-    if (isAtEnd()) return false;
-    if (source.charAt(current) != c) return false;
+  match(c) {
+    if (this.isAtEnd()) return false;
+    if (this.source.charAt(this.current) != c) return false;
 
-    current++;
+    this.current++;
     return true;
   }
+}
+
+type Args = {
+  source: string,
+  reportError: ReportError,
+};
+export function NewScanner({ source, reportError }: Args) {
+  const scanner = new ScannerImpl(source, reportError);
 
   return {
-    scanTokens,
+    scanTokens: scanner.scanTokens,
   };
 }
