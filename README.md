@@ -9,8 +9,8 @@ The scanner, parser & interpreter have all been built by hand, no external libra
 1. Clone this project
 2. Create a `src` folder on the root.
 3. Run `npm install` and `npm run build:watch`
-4. Open a new terminal and run `node src/tox.js file test.tox` to run a file (test.lox is in the root)
-5. To run the repl run `node src/tox.js repl`
+4. Open a new terminal and run `node lib/tox.js file test.tox` to run a file (test.lox is in the root)
+5. To run the repl run `node lib/tox.js repl`
 
 ## Syntax
 
