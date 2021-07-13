@@ -2,7 +2,7 @@
 
 import { Token, type TokenType } from "./token";
 import Expr, { type VisitableExpression, Variable } from "./expr";
-import Stmt from "./stmt";
+import Stmt, { type VisitableStatement } from "./stmt";
 
 type Reporter = {
   runtimeError: (token: Token, message: string) => void,
@@ -20,7 +20,8 @@ class Parser {
   parse() {
     let statements = [];
     while (!this.isAtEnd()) {
-      statements.push(this.declaration());
+      const statement = this.declaration();
+      if (statement) statements.push(statement);
     }
 
     return statements;
@@ -77,7 +78,7 @@ class Parser {
 
   doStatement() {
     this.consume("LEFT_BRACE", "Expect '{' after 'do'");
-    return new Stmt().Block(this.block());
+    return new Stmt.Block(this.block());
   }
 
   forStatement() {
@@ -104,15 +105,15 @@ class Parser {
     let body = this.statement();
 
     if (increment !== null) {
-      body = Stmt().Block([body, new Stmt().Expression(increment)]);
+      body = Stmt.Block([body, new Stmt.Expression(increment)]);
     }
 
-    if (condition == null) condition = new Expr().Literal(true);
+    if (condition == null) condition = new Expr.Literal(true);
 
-    body = new Stmt().While(condition, body);
+    body = new Stmt.While(condition, body);
 
     if (initializer != null) {
-      body = new Stmt().Block([initializer, body]);
+      body = new Stmt.Block([initializer, body]);
     }
     return body;
   }
@@ -128,13 +129,13 @@ class Parser {
       elseBranch = this.statement();
     }
 
-    return Stmt().If(condition, thenBranch, elseBranch);
+    return Stmt.If(condition, thenBranch, elseBranch);
   }
 
   logStatement() {
     const value = this.expression();
     this.consume("SEMICOLON", "Expect ';' after value.");
-    return Stmt().Log(value);
+    return Stmt.Log(value);
   }
 
   varDeclaration() {
@@ -152,27 +153,27 @@ class Parser {
     const condition = this.expression();
     this.consume("RIGHT_PAREN", "Expect ')' after condition.");
     const body = this.statement();
-    return Stmt().While(condition, body);
+    return Stmt.While(condition, body);
   }
 
   returnStatement() {
     const keyword = this.previous();
-    let value = null;
+    let value = Expr.Literal(null);
     if (!this.check("SEMICOLON")) {
       value = this.expression();
     }
     this.consume("SEMICOLON", "Expect ';' after return value.");
-    return new Stmt().Return(keyword, value);
+    return new Stmt.Return(value);
   }
 
   expressionStatement() {
     const expr = this.expression();
     this.consume("SEMICOLON", "Expect ';' after expression.");
-    return Stmt().Expression(expr);
+    return Stmt.Expression(expr);
   }
 
   block() {
-    let statements: Token[] = [];
+    let statements: VisitableStatement[] = [];
     while (!this.check("RIGHT_BRACE") && !this.isAtEnd()) {
       const statement = this.declaration();
       if (statement) statements.push(statement);
@@ -387,6 +388,6 @@ export function NewParser({ tokens, report }: Args) {
   const parser = new Parser({ tokens, report });
 
   return {
-    parseTokens: parser.parse,
+    parse: parser.parse,
   };
 }

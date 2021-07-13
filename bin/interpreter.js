@@ -5,7 +5,7 @@ import { type TokenType, Token } from "./token";
 import loxFunction, { type DeclarationType } from "./toxfunction";
 
 export type InterpreterReturnType = {|
-  interpret: (statements: Array<{ accept: (any) => void }>) => void,
+  interpret: (statements: Array<{ +accept: (any) => void }>) => void,
 |};
 
 type SupportedTypes = string | boolean | number;
@@ -388,17 +388,17 @@ export default function Interpreter({
 
   // evaluate expression
 
-  function evaluate<T>(expr: { accept: (InterPreterFunctions) => T }): T {
+  function evaluate<T>(expr: { +accept: (InterPreterFunctions) => T }): T {
     return expr.accept(interpreterFunctions);
   }
 
   // execute statement
-  function execute<T>(statement: { accept: (InterPreterFunctions) => T }) {
+  function execute<T>(statement: { +accept: (InterPreterFunctions) => T }) {
     statement.accept(interpreterFunctions);
   }
 
   function interpret(
-    statements: Array<{ accept: (InterPreterFunctions) => void }>
+    statements: Array<{ +accept: (InterPreterFunctions) => void }>
   ) {
     try {
       for (const statement of statements) {

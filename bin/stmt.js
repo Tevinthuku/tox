@@ -1,6 +1,8 @@
 // @flow
 import { Token } from "./token";
 
+import { type VisitableExpression } from "./expr";
+
 export interface VisitableStatement {
   +accept: (visitor: Visitor) => void;
 }
@@ -9,36 +11,36 @@ interface Visitor {
   visitFunctionStatement({
     name: Token,
     params: Token[],
-    body: Token[],
+    body: VisitableStatement[],
   }): void;
   visitLetStatement({
     name: Token,
-    initializer: VisitableStatement,
+    initializer: VisitableExpression | null,
   }): void;
-  visitExpressionStatement({ expression: VisitableStatement }): void;
-  visitLogStatement({ expression: VisitableStatement }): void;
+  visitExpressionStatement({ expression: VisitableExpression }): void;
+  visitLogStatement({ expression: VisitableExpression }): void;
   visitBlockStatement({ statements: VisitableStatement[] }): void;
   visitIfStatement({
-    condition: VisitableStatement,
+    condition: VisitableExpression,
     thenBranch: VisitableStatement,
-    elseBranch: VisitableStatement,
+    elseBranch: VisitableStatement | null,
   }): void;
   visitWhileStatement({
-    condition: VisitableStatement,
+    condition: VisitableExpression,
     body: VisitableStatement,
   }): void;
-  visitReturnStatement({ value: VisitableStatement }): void;
+  visitReturnStatement({ value: VisitableExpression }): void;
 }
 export default class Statement {
-  static Expression(expression: VisitableStatement) {
+  static Expression(expression: VisitableExpression) {
     return new ExpressionStatement(expression);
   }
 
-  static Log(expression: VisitableStatement) {
+  static Log(expression: VisitableExpression) {
     return new LogStatement(expression);
   }
 
-  static Let(name: Token, initializer: VisitableStatement) {
+  static Let(name: Token, initializer: VisitableExpression | null) {
     return new LetStatement(name, initializer);
   }
 
@@ -47,29 +49,29 @@ export default class Statement {
   }
 
   static If(
-    condition: VisitableStatement,
+    condition: VisitableExpression,
     thenBranch: VisitableStatement,
-    elseBranch: VisitableStatement
+    elseBranch: VisitableStatement | null
   ) {
     return new IfStatement(condition, thenBranch, elseBranch);
   }
 
-  static While(condition: VisitableStatement, body: VisitableStatement) {
+  static While(condition: VisitableExpression, body: VisitableStatement) {
     return new WhileStatement(condition, body);
   }
 
-  static Fn(name: Token, params: Token[], body: Token[]) {
+  static Fn(name: Token, params: Token[], body: VisitableStatement[]) {
     return new FunctionStatement(name, params, body);
   }
 
-  static Return(value: VisitableStatement) {
+  static Return(value: VisitableExpression) {
     return new ReturnStatement(value);
   }
 }
 
 export class ExpressionStatement implements VisitableStatement {
-  expression: VisitableStatement;
-  constructor(expression: VisitableStatement) {
+  expression: VisitableExpression;
+  constructor(expression: VisitableExpression) {
     this.expression = expression;
   }
   accept(visitor: Visitor) {
@@ -78,8 +80,8 @@ export class ExpressionStatement implements VisitableStatement {
 }
 
 export class LogStatement implements VisitableStatement {
-  expression: VisitableStatement;
-  constructor(expression: VisitableStatement) {
+  expression: VisitableExpression;
+  constructor(expression: VisitableExpression) {
     this.expression = expression;
   }
   accept(visitor: Visitor) {
@@ -89,8 +91,8 @@ export class LogStatement implements VisitableStatement {
 
 export class LetStatement implements VisitableStatement {
   name: Token;
-  initializer: VisitableStatement;
-  constructor(name: Token, initializer: VisitableStatement) {
+  initializer: VisitableExpression | null;
+  constructor(name: Token, initializer: VisitableExpression | null) {
     this.name = name;
     this.initializer = initializer;
   }
@@ -115,13 +117,13 @@ export class BlockOfStatements implements VisitableStatement {
 }
 
 export class IfStatement implements VisitableStatement {
-  condition: VisitableStatement;
+  condition: VisitableExpression;
   thenBranch: VisitableStatement;
-  elseBranch: VisitableStatement;
+  elseBranch: VisitableStatement | null;
   constructor(
-    condition: VisitableStatement,
+    condition: VisitableExpression,
     thenBranch: VisitableStatement,
-    elseBranch: VisitableStatement
+    elseBranch: VisitableStatement | null
   ) {
     this.condition = condition;
     this.thenBranch = thenBranch;
@@ -138,9 +140,9 @@ export class IfStatement implements VisitableStatement {
 }
 
 export class WhileStatement implements VisitableStatement {
-  condition: VisitableStatement;
+  condition: VisitableExpression;
   body: VisitableStatement;
-  constructor(condition: VisitableStatement, body: VisitableStatement) {
+  constructor(condition: VisitableExpression, body: VisitableStatement) {
     this.condition = condition;
     this.body = body;
   }
@@ -155,8 +157,8 @@ export class WhileStatement implements VisitableStatement {
 export class FunctionStatement implements VisitableStatement {
   name: Token;
   params: Token[];
-  body: Token[];
-  constructor(name: Token, params: Token[], body: Token[]) {
+  body: VisitableStatement[];
+  constructor(name: Token, params: Token[], body: VisitableStatement[]) {
     this.name = name;
     this.params = params;
     this.body = body;
@@ -172,8 +174,8 @@ export class FunctionStatement implements VisitableStatement {
 }
 
 export class ReturnStatement implements VisitableStatement {
-  value: VisitableStatement;
-  constructor(value: VisitableStatement) {
+  value: VisitableExpression;
+  constructor(value: VisitableExpression) {
     this.value = value;
   }
 

@@ -2,12 +2,12 @@
 import Environment from "./environment";
 import type { EnvironmentType } from "./environment";
 import { Token } from "./token";
-import type { StmtType } from "./stmt";
+import type { VisitableStatement } from "./stmt";
 
 export type DeclarationType = {
   name: Token,
   params: Array<Token>,
-  body: Array<StmtType>,
+  body: Array<VisitableStatement>,
 };
 
 type ReportRunTimeError = (Token, string) => void;
@@ -27,7 +27,7 @@ export default function LoxFunction({ declaration, report, closure }: Props) {
   }
   function call(
     interpreter: {
-      executeBlock: (Array<StmtType>, EnvironmentType) => void,
+      executeBlock: (Array<VisitableStatement>, EnvironmentType) => void,
     },
     args: Array<any>
   ) {
