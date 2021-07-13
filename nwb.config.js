@@ -8,10 +8,6 @@ module.exports = {
     },
   },
   babel: {
-    presets: ["@babel/preset-env", "@babel/preset-flow"],
-    plugins: [
-      ["@babel/plugin-proposal-private-methods", { loose: true }],
-      ["@babel/plugin-proposal-class-properties", { loose: true }],
-    ],
+    presets: ["@babel/preset-flow"],
   },
 };

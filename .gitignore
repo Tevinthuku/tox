@@ -1,7 +1,6 @@
 /coverage
 /demo/dist
 /es
-/src
 !src/.gitkeep
 /node_modules
 /umd

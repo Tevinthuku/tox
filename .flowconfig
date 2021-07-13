@@ -1,7 +1,7 @@
 [ignore]
 
 [include]
-.*/bin/.*
+.*/src/.*
 
 [libs]
 

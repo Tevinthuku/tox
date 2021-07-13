@@ -1,6 +1,6 @@
 {
   "name": "@tevcodes/tox",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Tox Programming language",
   "main": "lib/index.js",
   "module": "es/index.js",
@@ -10,8 +10,6 @@
     "umd"
   ],
   "scripts": {
-    "prebuild": "babel bin/ -d src/ --presets=@babel/preset-env,@babel/preset-flow",
-    "watch:build": "babel bin/ -d src/ -w --presets=@babel/preset-env,@babel/preset-flow",
     "build": "nwb build-web-module",
     "clean": "nwb clean-module",
     "flow": "flow",
@@ -20,14 +18,10 @@
     "test:coverage": "nwb test --coverage",
     "test:watch": "nwb test --server"
   },
-  "dependencies": {},
   "devDependencies": {
-    "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.9.0",
-    "@babel/preset-env": "^7.14.7",
     "@babel/preset-flow": "^7.9.0",
     "flow-bin": "^0.122.0",
-    "nwb": "0.24.x"
+    "nwb": "^0.25.2"
   },
   "author": "",
   "homepage": "",

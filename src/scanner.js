@@ -4,7 +4,11 @@ import { Token, type TokenType } from "./token";
 
 type ReportError = (line: number, message: string) => void;
 
-class ScannerImpl {
+type Args = {
+  source: string,
+  reportError: ReportError,
+};
+export default class Scanner {
   tokens: Token[] = [];
   start = 0;
   current = 0;
@@ -153,11 +157,11 @@ class ScannerImpl {
     return c === "_" || Boolean(c.match(/^[A-Za-z]+$/));
   }
 
-  isAlphaNumeric(c) {
+  isAlphaNumeric(c: string) {
     return this.isDigit(c) || this.isAlpha(c);
   }
 
-  isDigit(c) {
+  isDigit(c: string) {
     return !isNaN(parseInt(c, 10));
   }
 
@@ -208,7 +212,7 @@ class ScannerImpl {
     return this.source[this.current - 1];
   }
 
-  addToken(type: TokenType, literal = null) {
+  addToken(type: TokenType, literal: null | string | number = null) {
     const text = this.source.substring(this.start, this.current);
     this.tokens.push(new Token(type, text, literal, this.line));
   }
@@ -217,23 +221,11 @@ class ScannerImpl {
     return this.current >= this.source.length;
   }
 
-  match(c) {
+  match(c: string) {
     if (this.isAtEnd()) return false;
     if (this.source.charAt(this.current) != c) return false;
 
     this.current++;
     return true;
   }
-}
-
-type Args = {
-  source: string,
-  reportError: ReportError,
-};
-export function NewScanner({ source, reportError }: Args) {
-  const scanner = new ScannerImpl(source, reportError);
-
-  return {
-    scanTokens: scanner.scanTokens,
-  };
 }
