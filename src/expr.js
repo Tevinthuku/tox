@@ -7,29 +7,14 @@ export interface VisitableExpression {
   +accept: (visitor: Visitor) => void;
 }
 interface Visitor {
-  visitAssignmentExpression: ({ name: Token, value: any }) => void;
-  visitLiteralExpression: ({ value: LiteralValueType }) => void;
-  visitVariableExpression: ({ name: Token }) => void;
-  visitGroupingExpression: ({ expression: VisitableExpression }) => void;
-  visitCallExpression: ({
-    calle: VisitableExpression,
-    paren: Token,
-    args: VisitableExpression[],
-  }) => void;
-  visitUnaryExpression: ({
-    operator: Token,
-    right: VisitableExpression,
-  }) => void;
-  visitBinaryExpression: ({
-    left: VisitableExpression,
-    operator: Token,
-    right: VisitableExpression,
-  }) => void;
-  visitLogicalExpression: ({
-    left: VisitableExpression,
-    operator: Token,
-    right: VisitableExpression,
-  }) => void;
+  visitAssignmentExpression: (Assign) => void;
+  visitLiteralExpression: (Literal) => void;
+  visitVariableExpression: (Variable) => void;
+  visitGroupingExpression: (Grouping) => void;
+  visitCallExpression: (Call) => void;
+  visitUnaryExpression: (Unary) => void;
+  visitBinaryExpression: (Binary) => void;
+  visitLogicalExpression: (Logical) => void;
 }
 
 export default class Expression {
@@ -92,11 +77,7 @@ export class Binary implements VisitableExpression {
   }
 
   accept(visitor: Visitor) {
-    return visitor.visitBinaryExpression({
-      left: this.left,
-      operator: this.operator,
-      right: this.right,
-    });
+    return visitor.visitBinaryExpression(this);
   }
 }
 
@@ -109,10 +90,7 @@ export class Unary implements VisitableExpression {
   }
 
   accept(visitor: Visitor) {
-    return visitor.visitUnaryExpression({
-      operator: this.operator,
-      right: this.right,
-    });
+    return visitor.visitUnaryExpression(this);
   }
 }
 
@@ -123,7 +101,7 @@ export class Literal implements VisitableExpression {
   }
 
   accept(visitor: Visitor) {
-    return visitor.visitLiteralExpression({ value: this.value });
+    return visitor.visitLiteralExpression(this);
   }
 }
 
@@ -133,7 +111,7 @@ export class Grouping implements VisitableExpression {
     this.expression = expression;
   }
   accept(visitor: Visitor) {
-    return visitor.visitGroupingExpression({ expression: this.expression });
+    return visitor.visitGroupingExpression(this);
   }
 }
 
@@ -144,7 +122,7 @@ export class Variable implements VisitableExpression {
   }
 
   accept(visitor: Visitor) {
-    return visitor.visitVariableExpression({ name: this.name });
+    return visitor.visitVariableExpression(this);
   }
 }
 
@@ -156,10 +134,7 @@ export class Assign implements VisitableExpression {
     this.value = value;
   }
   accept(visitor: Visitor) {
-    return visitor.visitAssignmentExpression({
-      name: this.name,
-      value: this.value,
-    });
+    return visitor.visitAssignmentExpression(this);
   }
 }
 
@@ -178,11 +153,7 @@ export class Logical implements VisitableExpression {
   }
 
   accept(visitor: Visitor) {
-    return visitor.visitLogicalExpression({
-      left: this.left,
-      operator: this.operator,
-      right: this.right,
-    });
+    return visitor.visitLogicalExpression(this);
   }
 }
 
@@ -201,10 +172,6 @@ export class Call implements VisitableExpression {
   }
 
   accept(visitor: Visitor) {
-    return visitor.visitCallExpression({
-      calle: this.calle,
-      paren: this.paren,
-      args: this.args,
-    });
+    return visitor.visitCallExpression(this);
   }
 }
