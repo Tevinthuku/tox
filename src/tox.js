@@ -1,6 +1,6 @@
 // @flow
-import { NewScanner } from "./scanner";
-import { NewParser } from "./parser";
+import Scanner from "./scanner";
+import Parser from "./parser";
 import Interpreter from "./interpreter";
 import { Token } from "./token";
 const readline = require("readline");
@@ -37,13 +37,14 @@ export class Tox {
   }
 
   run(source: string) {
-    const scanner = new NewScanner({ source, reportError: this.error });
-    const tokens = scanner.scanTokens();
     const report = {
+      scannerError: this.error,
       runtimeError: this.runtimeError,
       tokenError: this.tokenError,
     };
-    const parser = NewParser({ tokens, report: report });
+    const scanner = new Scanner(source, report.scannerError);
+    const tokens = scanner.scanTokens();
+    const parser = new Parser({ tokens, report: report });
     const statements = parser.parse();
 
     if (this.hadError) return;

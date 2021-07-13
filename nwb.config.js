@@ -8,7 +8,6 @@ module.exports = {
     },
   },
   babel: {
-    presets: ["@babel/preset-env", "@babel/preset-flow"],
-    plugins: [],
+    presets: ["@babel/preset-flow"],
   },
 };

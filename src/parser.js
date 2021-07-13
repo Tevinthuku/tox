@@ -9,7 +9,12 @@ type Reporter = {
   tokenError: (token: Token, message: string) => void,
 };
 
-class Parser {
+type Args = {
+  tokens: Token[],
+  report: Reporter,
+};
+
+export default class Parser {
   current = 0;
   tokens: Token[];
   report: Reporter;
@@ -336,7 +341,7 @@ class Parser {
     return false;
   }
 
-  check(type) {
+  check(type: TokenType) {
     if (this.isAtEnd()) return false;
     return this.peek().type === type;
   }
@@ -377,17 +382,4 @@ class Parser {
       this.advance();
     }
   }
-}
-
-type Args = {
-  tokens: Token[],
-  report: Reporter,
-};
-
-export function NewParser({ tokens, report }: Args) {
-  const parser = new Parser({ tokens, report });
-
-  return {
-    parse: parser.parse,
-  };
 }
