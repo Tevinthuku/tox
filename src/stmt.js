@@ -8,28 +8,14 @@ export interface VisitableStatement {
 }
 
 interface Visitor {
-  visitFunctionStatement({
-    name: Token,
-    params: Token[],
-    body: VisitableStatement[],
-  }): void;
-  visitLetStatement({
-    name: Token,
-    initializer: VisitableExpression | null,
-  }): void;
-  visitExpressionStatement({ expression: VisitableExpression }): void;
-  visitLogStatement({ expression: VisitableExpression }): void;
-  visitBlockStatement({ statements: VisitableStatement[] }): void;
-  visitIfStatement({
-    condition: VisitableExpression,
-    thenBranch: VisitableStatement,
-    elseBranch: VisitableStatement | null,
-  }): void;
-  visitWhileStatement({
-    condition: VisitableExpression,
-    body: VisitableStatement,
-  }): void;
-  visitReturnStatement({ value: VisitableExpression }): void;
+  visitFunctionStatement(FunctionStatement): void;
+  visitLetStatement(LetStatement): void;
+  visitExpressionStatement(ExpressionStatement): void;
+  visitLogStatement(LogStatement): void;
+  visitBlockStatement(BlockOfStatements): void;
+  visitIfStatement(IfStatement): void;
+  visitWhileStatement(WhileStatement): void;
+  visitReturnStatement(ReturnStatement): void;
 }
 export default class Statement {
   static Expression(expression: VisitableExpression) {
@@ -75,7 +61,7 @@ export class ExpressionStatement implements VisitableStatement {
     this.expression = expression;
   }
   accept(visitor: Visitor) {
-    return visitor.visitExpressionStatement({ expression: this.expression });
+    return visitor.visitExpressionStatement(this);
   }
 }
 
@@ -85,7 +71,7 @@ export class LogStatement implements VisitableStatement {
     this.expression = expression;
   }
   accept(visitor: Visitor) {
-    return visitor.visitLogStatement({ expression: this.expression });
+    return visitor.visitLogStatement(this);
   }
 }
 
@@ -98,10 +84,7 @@ export class LetStatement implements VisitableStatement {
   }
 
   accept(visitor: Visitor) {
-    return visitor.visitLetStatement({
-      name: this.name,
-      initializer: this.initializer,
-    });
+    return visitor.visitLetStatement(this);
   }
 }
 
@@ -112,7 +95,7 @@ export class BlockOfStatements implements VisitableStatement {
   }
 
   accept(visitor: Visitor) {
-    return visitor.visitBlockStatement({ statements: this.statements });
+    return visitor.visitBlockStatement(this);
   }
 }
 
@@ -131,11 +114,7 @@ export class IfStatement implements VisitableStatement {
   }
 
   accept(visitor: Visitor) {
-    return visitor.visitIfStatement({
-      condition: this.condition,
-      thenBranch: this.thenBranch,
-      elseBranch: this.elseBranch,
-    });
+    return visitor.visitIfStatement(this);
   }
 }
 
@@ -147,10 +126,7 @@ export class WhileStatement implements VisitableStatement {
     this.body = body;
   }
   accept(visitor: Visitor) {
-    return visitor.visitWhileStatement({
-      condition: this.condition,
-      body: this.body,
-    });
+    return visitor.visitWhileStatement(this);
   }
 }
 
@@ -165,11 +141,7 @@ export class FunctionStatement implements VisitableStatement {
   }
 
   accept(visitor: Visitor) {
-    return visitor.visitFunctionStatement({
-      name: this.name,
-      params: this.params,
-      body: this.body,
-    });
+    return visitor.visitFunctionStatement(this);
   }
 }
 
@@ -180,6 +152,6 @@ export class ReturnStatement implements VisitableStatement {
   }
 
   accept(visitor: Visitor) {
-    return visitor.visitReturnStatement({ value: this.value });
+    return visitor.visitReturnStatement(this);
   }
 }
