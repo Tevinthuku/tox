@@ -14,13 +14,13 @@ type Args = {
 export default class Environment {
   enclosing: ?Environment;
   report: Reporter;
-  environmentMap: { [string]: mixed } = {};
+  environmentMap: { [string]: any } = {};
   constructor({ report, enclosing }: Args) {
     this.enclosing = enclosing;
     this.report = report;
   }
 
-  define(name: string, value: mixed) {
+  define(name: string, value: any) {
     this.environmentMap[name] = value;
   }
 
@@ -35,7 +35,7 @@ export default class Environment {
     );
   }
 
-  assign(name: Token, value: mixed) {
+  assign(name: Token, value: any) {
     if (this.environmentMap.hasOwnProperty(name.lexeme)) {
       this.environmentMap[name.lexeme] = value;
       return;

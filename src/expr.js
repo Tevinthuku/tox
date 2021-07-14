@@ -4,17 +4,17 @@ import { Token } from "./token";
 
 export type LiteralValueType = boolean | string | null | number | void;
 export interface VisitableExpression {
-  +accept: (visitor: Visitor) => void;
+  +accept: (visitor: Visitor) => LiteralValueType;
 }
 interface Visitor {
-  visitAssignmentExpression: (Assign) => void;
-  visitLiteralExpression: (Literal) => void;
-  visitVariableExpression: (Variable) => void;
-  visitGroupingExpression: (Grouping) => void;
-  visitCallExpression: (Call) => void;
-  visitUnaryExpression: (Unary) => void;
-  visitBinaryExpression: (Binary) => void;
-  visitLogicalExpression: (Logical) => void;
+  visitAssignmentExpression: (Assign) => LiteralValueType;
+  visitLiteralExpression: (Literal) => LiteralValueType;
+  visitVariableExpression: (Variable) => LiteralValueType;
+  visitGroupingExpression: (Grouping) => LiteralValueType;
+  visitCallExpression: (Call | Object) => LiteralValueType;
+  visitUnaryExpression: (Unary) => LiteralValueType;
+  visitBinaryExpression: (Binary) => LiteralValueType;
+  visitLogicalExpression: (Logical) => LiteralValueType;
 }
 
 export default class Expression {
@@ -128,8 +128,8 @@ export class Variable implements VisitableExpression {
 
 export class Assign implements VisitableExpression {
   name: Token;
-  value: any;
-  constructor(name: Token, value: any) {
+  value: VisitableExpression;
+  constructor(name: Token, value: VisitableExpression) {
     this.name = name;
     this.value = value;
   }

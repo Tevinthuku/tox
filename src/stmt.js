@@ -4,18 +4,18 @@ import { Token } from "./token";
 import { type VisitableExpression } from "./expr";
 
 export interface VisitableStatement {
-  +accept: (visitor: Visitor) => void;
+  +accept: (visitor: Visitor) => null;
 }
 
 interface Visitor {
-  visitFunctionStatement(FunctionStatement): void;
-  visitLetStatement(LetStatement): void;
-  visitExpressionStatement(ExpressionStatement): void;
-  visitLogStatement(LogStatement): void;
-  visitBlockStatement(BlockOfStatements): void;
-  visitIfStatement(IfStatement): void;
-  visitWhileStatement(WhileStatement): void;
-  visitReturnStatement(ReturnStatement): void;
+  visitFunctionStatement(FunctionStatement): null;
+  visitLetStatement(LetStatement): null;
+  visitExpressionStatement(ExpressionStatement): null;
+  visitLogStatement(LogStatement): null;
+  visitBlockStatement(BlockOfStatements): null;
+  visitIfStatement(IfStatement): null;
+  visitWhileStatement(WhileStatement): null;
+  visitReturnStatement(ReturnStatement): null;
 }
 export default class Statement {
   static Expression(expression: VisitableExpression) {
