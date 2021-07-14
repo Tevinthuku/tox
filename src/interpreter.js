@@ -309,8 +309,6 @@ export default function Interpreter({ report, logger = console.log }: Args) {
 
   // global functions
 
-  // TODO: Fix definition of this inbuilt clock function
-
   globals.define("clock", new GlobalToxFunction(() => Date.now(), 0));
 
   // evaluate expression
