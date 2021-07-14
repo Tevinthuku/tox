@@ -1,13 +1,6 @@
 // @flow
 import type { Token } from "./token";
 
-export type EnvironmentType = {|
-  assign: (name: Token, value: any) => void,
-  define: (name: string, value: any) => void,
-  get: (name: Token) => void | any,
-  environmentMap: { [string]: mixed },
-|};
-
 type ReportRunTimeError = (Token, string) => void;
 
 type Reporter = {
@@ -16,39 +9,46 @@ type Reporter = {
 
 type Args = {
   report: Reporter,
-  enclosing?: EnvironmentType,
+  enclosing?: Environment,
 };
-export default function Environment({
-  report,
-  enclosing,
-}: Args): EnvironmentType {
-  let environmentMap: { [string]: mixed } = {};
-
-  function define(name: string, value: mixed) {
-    environmentMap[name] = value;
+export default class Environment {
+  enclosing: ?Environment;
+  report: Reporter;
+  environmentMap: { [string]: mixed } = {};
+  constructor({ report, enclosing }: Args) {
+    this.enclosing = enclosing;
+    this.report = report;
   }
 
-  function get(name: Token) {
-    if (environmentMap.hasOwnProperty(name.lexeme)) {
-      return environmentMap[name.lexeme];
+  define(name: string, value: mixed) {
+    this.environmentMap[name] = value;
+  }
+
+  get(name: Token) {
+    if (this.environmentMap.hasOwnProperty(name.lexeme)) {
+      return this.environmentMap[name.lexeme];
     }
-    if (enclosing != null) return enclosing.get(name);
-    report.runtimeError(name, `Undefined variable " ${name.lexeme} " .`);
+    if (this.enclosing != null) return this.enclosing.get(name);
+    throw this.report.runtimeError(
+      name,
+      `Undefined variable " ${name.lexeme} " .`
+    );
   }
 
-  function assign(name: Token, value: mixed) {
-    if (environmentMap.hasOwnProperty(name.lexeme)) {
-      environmentMap[name.lexeme] = value;
+  assign(name: Token, value: mixed) {
+    if (this.environmentMap.hasOwnProperty(name.lexeme)) {
+      this.environmentMap[name.lexeme] = value;
       return;
     }
 
-    if (enclosing != null) {
-      enclosing.assign(name, value);
+    if (this.enclosing != null) {
+      this.enclosing.assign(name, value);
       return;
     }
 
-    report.runtimeError(name, `Undefined variable " ${name.lexeme} " .`);
+    throw this.report.runtimeError(
+      name,
+      `Undefined variable " ${name.lexeme} " .`
+    );
   }
-
-  return { define, get, assign, environmentMap };
 }

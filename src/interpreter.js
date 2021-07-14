@@ -1,8 +1,9 @@
 // @flow
-import Environment, { type EnvironmentType } from "./environment";
-
+import Environment from "./environment";
+import { FunctionStatement } from "./stmt";
+import { Literal, type LiteralValueType, Unary, Assign } from "./expr";
 import { type TokenType, Token } from "./token";
-import loxFunction, { type DeclarationType } from "./toxfunction";
+import LoxFunction from "./toxfunction";
 
 export type InterpreterReturnType = {|
   interpret: (statements: Array<{ +accept: (any) => void }>) => void,
@@ -11,11 +12,8 @@ export type InterpreterReturnType = {|
 type SupportedTypes = string | boolean | number;
 
 type InterPreterFunctions = {
-  visitLiteralExpression: (expr: { value: mixed }) => any,
-  visitUnaryExpression: (expr: {
-    operator: Token,
-    right: GenericAcceptObject<mixed>,
-  }) => null | number | boolean,
+  visitLiteralExpression: (Literal) => LiteralValueType,
+  visitUnaryExpression: (expr: Unary) => null | number | boolean,
   visitVariableExpression: (expr: { name: Token }) => any | void,
   visitGroupingExpression: (expr: {
     expression: GenericAcceptObject<mixed>,
@@ -25,10 +23,7 @@ type InterPreterFunctions = {
     operator: Token,
     right: GenericAcceptObject<string | number>,
   }) => null | number | string | boolean,
-  visitAssignmentExpression: (expr: {
-    value: GenericAcceptObject<SupportedTypes>,
-    name: Token,
-  }) => any | void,
+  visitAssignmentExpression: (expr: Assign) => any | void,
   visitLogicalExpression: (expr: {
     left: GenericAcceptObject<SupportedTypes>,
     operator: Token,
@@ -47,7 +42,7 @@ type InterPreterFunctions = {
   visitReturnStatement: (stmt: {
     value: GenericAcceptObject<mixed>,
   }) => empty,
-  visitFunctionStatement: (stmt: DeclarationType) => null,
+  visitFunctionStatement: (stmt: FunctionStatement) => null,
   visitExpressionStatement: (stmt: {
     expression: GenericAcceptObject<mixed>,
   }) => null,
@@ -72,7 +67,7 @@ type InterPreterFunctions = {
   }) => null,
   executeBlock: (
     statements: Array<GenericAcceptObject<mixed>>,
-    env: EnvironmentType
+    env: Environment
   ) => void,
 };
 
@@ -94,8 +89,8 @@ export default function Interpreter({
   report,
   logger = console.log,
 }: Args): InterpreterReturnType {
-  const globals: EnvironmentType = Environment({ report });
-  let environment: EnvironmentType = globals;
+  const globals: Environment = new Environment({ report });
+  let environment: Environment = globals;
 
   function visitLiteralExpression(expr) {
     return expr.value;
@@ -106,10 +101,7 @@ export default function Interpreter({
     return object;
   }
 
-  function visitUnaryExpression(expr: {
-    right: GenericAcceptObject<mixed>,
-    operator: Token,
-  }) {
+  function visitUnaryExpression(expr: Unary) {
     const right = evaluate(expr.right);
     switch (expr.operator.type) {
       case "MINUS":
@@ -187,10 +179,7 @@ export default function Interpreter({
     return null;
   }
 
-  function visitAssignmentExpression(expr: {
-    value: GenericAcceptObject<SupportedTypes>,
-    name: Token,
-  }) {
+  function visitAssignmentExpression(expr: Assign) {
     const value = evaluate(expr.value);
     environment.assign(expr.name, value);
     return value;
@@ -252,8 +241,8 @@ export default function Interpreter({
 
     throw value;
   }
-  function visitFunctionStatement(stmt: DeclarationType) {
-    const fn = loxFunction({
+  function visitFunctionStatement(stmt: FunctionStatement) {
+    const fn = new LoxFunction({
       declaration: stmt,
       report,
       closure: environment,
@@ -325,7 +314,7 @@ export default function Interpreter({
 
   function executeBlock(
     statements: Array<GenericAcceptObject<mixed>>,
-    env: EnvironmentType
+    env: Environment
   ) {
     const previousEnvironment = environment;
     try {

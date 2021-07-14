@@ -1,14 +1,7 @@
 // @flow
 import Environment from "./environment";
-import type { EnvironmentType } from "./environment";
 import { Token } from "./token";
-import type { VisitableStatement } from "./stmt";
-
-export type DeclarationType = {
-  name: Token,
-  params: Array<Token>,
-  body: Array<VisitableStatement>,
-};
+import type { FunctionStatement, VisitableStatement } from "./stmt";
 
 type ReportRunTimeError = (Token, string) => void;
 
@@ -16,43 +9,45 @@ type Report = {
   runtimeError: ReportRunTimeError,
 };
 type Props = {
-  declaration: DeclarationType,
+  declaration: FunctionStatement,
   report: Report,
-  closure: EnvironmentType,
+  closure: Environment,
 };
 
-export default function LoxFunction({ declaration, report, closure }: Props) {
-  function arity() {
-    return declaration.params.length;
+export default class LoxFunction {
+  declaration: FunctionStatement;
+  report: Report;
+  closure: Environment;
+  constructor({ declaration, report, closure }: Props) {
+    this.declaration = declaration;
+    this.report = report;
+    this.closure = closure;
   }
-  function call(
+  arity() {
+    return this.declaration.params.length;
+  }
+  call(
     interpreter: {
-      executeBlock: (Array<VisitableStatement>, EnvironmentType) => void,
+      executeBlock: (Array<VisitableStatement>, Environment) => void,
     },
     args: Array<any>
   ) {
     const environment = new Environment({
-      report,
-      enclosing: closure,
+      report: this.report,
+      enclosing: this.closure,
     });
-    for (let i = 0; i < declaration.params.length; i++) {
-      environment.define(declaration.params[i].lexeme, args[i]);
+    for (let i = 0; i < this.declaration.params.length; i++) {
+      environment.define(this.declaration.params[i].lexeme, args[i]);
     }
     try {
-      interpreter.executeBlock(declaration.body, environment);
+      interpreter.executeBlock(this.declaration.body, environment);
     } catch (returnVal) {
       return returnVal;
     }
     return null;
   }
 
-  function toString() {
-    return "<fn " + declaration.name.lexeme + ">";
+  toString() {
+    return "<fn " + this.declaration.name.lexeme + ">";
   }
-
-  return {
-    call,
-    arity,
-    toString,
-  };
 }
