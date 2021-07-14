@@ -14,7 +14,7 @@ type Props = {
   closure: Environment,
 };
 
-export default class LoxFunction {
+export default class ToxFunction {
   declaration: FunctionStatement;
   report: Report;
   closure: Environment;

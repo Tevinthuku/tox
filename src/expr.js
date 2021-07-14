@@ -2,7 +2,7 @@
 
 import { Token } from "./token";
 
-export type LiteralValueType = boolean | string | null | number | void;
+export type LiteralValueType = mixed;
 export interface VisitableExpression {
   +accept: (visitor: Visitor) => LiteralValueType;
 }
