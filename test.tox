@@ -8,4 +8,4 @@ fn sum(a, b) {
 
 log sum(12, 10);
 
-log clock;
+log clock();
