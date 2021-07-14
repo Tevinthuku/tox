@@ -13,7 +13,7 @@ import {
 } from "./stmt";
 import {
   Literal,
-  type LiteralValueType,
+  type ExpressionReturnType,
   type VisitableExpression,
   Unary,
   Assign,
@@ -21,25 +21,24 @@ import {
   Variable,
   Grouping,
   Logical,
+  Call,
 } from "./expr";
 import { type TokenType, Token } from "./token";
-import LoxFunction from "./toxfunction";
-
-type SupportedTypes = string | boolean | number;
+import ToxFunction, {
+  type ToxCallable,
+  BaseToxFunction,
+  GlobalToxFunction,
+} from "./toxfunction";
 
 type InterPreterFunctions = {
-  visitLiteralExpression: (Literal) => LiteralValueType,
-  visitUnaryExpression: (expr: Unary) => LiteralValueType,
-  visitVariableExpression: (expr: Variable) => LiteralValueType,
-  visitGroupingExpression: (expr: Grouping) => LiteralValueType,
-  visitBinaryExpression: (expr: Binary) => LiteralValueType,
-  visitAssignmentExpression: (expr: Assign) => LiteralValueType,
-  visitLogicalExpression: (expr: Logical) => LiteralValueType,
-  visitCallExpression: (expr: {
-    args: VisitableExpression[],
-    calle: Object,
-    paren: Token,
-  }) => void | any,
+  visitLiteralExpression: (Literal) => ExpressionReturnType,
+  visitUnaryExpression: (expr: Unary) => ExpressionReturnType,
+  visitVariableExpression: (expr: Variable) => ExpressionReturnType,
+  visitGroupingExpression: (expr: Grouping) => ExpressionReturnType,
+  visitBinaryExpression: (expr: Binary) => ExpressionReturnType,
+  visitAssignmentExpression: (expr: Assign) => ExpressionReturnType,
+  visitLogicalExpression: (expr: Logical) => ExpressionReturnType,
+  visitCallExpression: (expr: Call) => void | any,
   visitReturnStatement: (stmt: ReturnStatement) => empty,
   visitFunctionStatement: (stmt: FunctionStatement) => null,
   visitExpressionStatement: (stmt: ExpressionStatement) => null,
@@ -48,7 +47,7 @@ type InterPreterFunctions = {
   visitBlockStatement: (stmt: BlockOfStatements) => null,
   visitIfStatement: (stmt: IfStatement) => null,
   visitWhileStatement: (stmt: WhileStatement) => null,
-  executeBlock: (statements: VisitableStatement[], env: Environment) => void,
+  executeBlock: (statements: VisitableStatement[], env: Environment) => null,
 };
 
 type GenericAcceptObject<T> = {
@@ -63,7 +62,7 @@ type Report = {
 
 type Args = {
   report: Report,
-  logger?: (any) => void,
+  logger?: (mixed) => void,
 };
 export default function Interpreter({ report, logger = console.log }: Args) {
   const globals: Environment = new Environment({ report });
@@ -123,7 +122,7 @@ export default function Interpreter({ report, logger = console.log }: Args) {
           return String(left) + String(right);
         }
 
-        report.runtimeError(
+        throw report.runtimeError(
           expr.operator,
           "Operands must be two numbers or two strings."
         );
@@ -167,23 +166,18 @@ export default function Interpreter({ report, logger = console.log }: Args) {
     return evaluate(expr.right);
   }
 
-  function visitCallExpression(expr: {
-    calle: Object,
-    paren: Token,
-    args: VisitableExpression[],
-  }) {
-    // TODO: Fix this callExpression
+  function visitCallExpression(expr: Call) {
     const callee = evaluate(expr.calle);
     let expressionargs = [];
     for (const arg of expr.args) {
       expressionargs.push(evaluate(arg));
     }
 
-    if (callee instanceof LoxFunction) {
+    if (callee instanceof BaseToxFunction) {
       if (expressionargs.length !== callee.arity()) {
         return report.runtimeError(
           expr.paren,
-          "Expected " + // $FlowFixMe
+          "Expected " +
             callee.arity() +
             " arguments but got " +
             expressionargs.length +
@@ -204,7 +198,7 @@ export default function Interpreter({ report, logger = console.log }: Args) {
     throw value;
   }
   function visitFunctionStatement(stmt: FunctionStatement) {
-    const fn = new LoxFunction({
+    const fn = new ToxFunction({
       declaration: stmt,
       report,
       closure: environment,
@@ -270,6 +264,7 @@ export default function Interpreter({ report, logger = console.log }: Args) {
     } finally {
       environment = previousEnvironment;
     }
+    return null;
   }
 
   function isEqual(a, b) {
@@ -278,15 +273,15 @@ export default function Interpreter({ report, logger = console.log }: Args) {
     return a === b;
   }
 
-  function checkNumberOperand(operator: Token, operand: LiteralValueType) {
+  function checkNumberOperand(operator: Token, operand: ExpressionReturnType) {
     if (typeof operand === "number") return;
     throw report.runtimeError(operator, "Operand must be a number");
   }
 
   function checkNumberOperands(
     operator: Token,
-    left: LiteralValueType,
-    right: LiteralValueType
+    left: ExpressionReturnType,
+    right: ExpressionReturnType
   ) {
     if (typeof left === "number" && typeof right === "number") return;
     throw report.runtimeError(operator, "Operands must be a number");
@@ -314,11 +309,7 @@ export default function Interpreter({ report, logger = console.log }: Args) {
 
   // global functions
 
-  globals.define("clock", {
-    call: (interpreterFunctions, []) => Date.now(),
-    arity: () => 0,
-    toString: () => "<Native fn>",
-  });
+  globals.define("clock", new GlobalToxFunction(() => Date.now(), 0));
 
   // evaluate expression
   function evaluate(expr: VisitableExpression) {

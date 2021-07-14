@@ -14,11 +14,35 @@ type Props = {
   closure: Environment,
 };
 
-export default class LoxFunction {
+type Interpreter = {
+  executeBlock: (Array<VisitableStatement>, Environment) => null,
+};
+
+export interface ToxCallable {
+  arity(): number;
+  call(Interpreter, mixed[]): mixed;
+  toString(): string;
+}
+
+export class BaseToxFunction implements ToxCallable {
+  arity() {
+    return 0;
+  }
+  call(interpreter: Interpreter, args: Array<mixed>) {
+    return null;
+  }
+
+  toString() {
+    return "<baseToxFn />";
+  }
+}
+
+export default class ToxFunction extends BaseToxFunction {
   declaration: FunctionStatement;
   report: Report;
   closure: Environment;
   constructor({ declaration, report, closure }: Props) {
+    super();
     this.declaration = declaration;
     this.report = report;
     this.closure = closure;
@@ -26,12 +50,7 @@ export default class LoxFunction {
   arity() {
     return this.declaration.params.length;
   }
-  call(
-    interpreter: {
-      executeBlock: (Array<VisitableStatement>, Environment) => void,
-    },
-    args: Array<any>
-  ) {
+  call(interpreter: Interpreter, args: Array<mixed>) {
     const environment = new Environment({
       report: this.report,
       enclosing: this.closure,
@@ -49,5 +68,22 @@ export default class LoxFunction {
 
   toString() {
     return "<fn " + this.declaration.name.lexeme + ">";
+  }
+}
+
+export class GlobalToxFunction extends BaseToxFunction {
+  functionToCall: Function;
+  expectedArguments: number;
+  constructor(functionToCall: Function, expectedArguments: number) {
+    super();
+    this.functionToCall = functionToCall;
+    this.expectedArguments = expectedArguments;
+  }
+  call(interpreter: Interpreter, args: Array<mixed>) {
+    return this.functionToCall();
+  }
+
+  toString() {
+    return `<NativeFn />`;
   }
 }

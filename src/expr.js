@@ -2,19 +2,19 @@
 
 import { Token } from "./token";
 
-export type LiteralValueType = boolean | string | null | number | void;
+export type ExpressionReturnType = mixed;
 export interface VisitableExpression {
-  +accept: (visitor: Visitor) => LiteralValueType;
+  +accept: (visitor: Visitor) => ExpressionReturnType;
 }
 interface Visitor {
-  visitAssignmentExpression: (Assign) => LiteralValueType;
-  visitLiteralExpression: (Literal) => LiteralValueType;
-  visitVariableExpression: (Variable) => LiteralValueType;
-  visitGroupingExpression: (Grouping) => LiteralValueType;
-  visitCallExpression: (Call | Object) => LiteralValueType;
-  visitUnaryExpression: (Unary) => LiteralValueType;
-  visitBinaryExpression: (Binary) => LiteralValueType;
-  visitLogicalExpression: (Logical) => LiteralValueType;
+  visitAssignmentExpression: (Assign) => ExpressionReturnType;
+  visitLiteralExpression: (Literal) => ExpressionReturnType;
+  visitVariableExpression: (Variable) => ExpressionReturnType;
+  visitGroupingExpression: (Grouping) => ExpressionReturnType;
+  visitCallExpression: (Call | Object) => ExpressionReturnType;
+  visitUnaryExpression: (Unary) => ExpressionReturnType;
+  visitBinaryExpression: (Binary) => ExpressionReturnType;
+  visitLogicalExpression: (Logical) => ExpressionReturnType;
 }
 
 export default class Expression {
@@ -29,7 +29,7 @@ export default class Expression {
     return new Grouping(expression);
   }
 
-  static Literal(value: LiteralValueType) {
+  static Literal(value: ExpressionReturnType) {
     return new Literal(value);
   }
 
@@ -95,8 +95,8 @@ export class Unary implements VisitableExpression {
 }
 
 export class Literal implements VisitableExpression {
-  value: LiteralValueType;
-  constructor(value: LiteralValueType) {
+  value: ExpressionReturnType;
+  constructor(value: ExpressionReturnType) {
     this.value = value;
   }
 
