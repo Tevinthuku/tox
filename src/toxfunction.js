@@ -30,7 +30,7 @@ export default class ToxFunction {
     interpreter: {
       executeBlock: (Array<VisitableStatement>, Environment) => void,
     },
-    args: Array<any>
+    args: Array<mixed>
   ) {
     const environment = new Environment({
       report: this.report,

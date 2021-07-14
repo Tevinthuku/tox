@@ -21,11 +21,10 @@ import {
   Variable,
   Grouping,
   Logical,
+  Call,
 } from "./expr";
 import { type TokenType, Token } from "./token";
-import LoxFunction from "./toxfunction";
-
-type SupportedTypes = string | boolean | number;
+import ToxFunction from "./toxfunction";
 
 type InterPreterFunctions = {
   visitLiteralExpression: (Literal) => LiteralValueType,
@@ -35,11 +34,7 @@ type InterPreterFunctions = {
   visitBinaryExpression: (expr: Binary) => LiteralValueType,
   visitAssignmentExpression: (expr: Assign) => LiteralValueType,
   visitLogicalExpression: (expr: Logical) => LiteralValueType,
-  visitCallExpression: (expr: {
-    args: VisitableExpression[],
-    calle: Object,
-    paren: Token,
-  }) => void | any,
+  visitCallExpression: (expr: Call) => void | any,
   visitReturnStatement: (stmt: ReturnStatement) => empty,
   visitFunctionStatement: (stmt: FunctionStatement) => null,
   visitExpressionStatement: (stmt: ExpressionStatement) => null,
@@ -63,7 +58,7 @@ type Report = {
 
 type Args = {
   report: Report,
-  logger?: (any) => void,
+  logger?: (mixed) => void,
 };
 export default function Interpreter({ report, logger = console.log }: Args) {
   const globals: Environment = new Environment({ report });
@@ -123,7 +118,7 @@ export default function Interpreter({ report, logger = console.log }: Args) {
           return String(left) + String(right);
         }
 
-        report.runtimeError(
+        throw report.runtimeError(
           expr.operator,
           "Operands must be two numbers or two strings."
         );
@@ -167,23 +162,18 @@ export default function Interpreter({ report, logger = console.log }: Args) {
     return evaluate(expr.right);
   }
 
-  function visitCallExpression(expr: {
-    calle: Object,
-    paren: Token,
-    args: VisitableExpression[],
-  }) {
-    // TODO: Fix this callExpression
+  function visitCallExpression(expr: Call) {
     const callee = evaluate(expr.calle);
     let expressionargs = [];
     for (const arg of expr.args) {
       expressionargs.push(evaluate(arg));
     }
 
-    if (callee instanceof LoxFunction) {
+    if (callee instanceof ToxFunction) {
       if (expressionargs.length !== callee.arity()) {
         return report.runtimeError(
           expr.paren,
-          "Expected " + // $FlowFixMe
+          "Expected " +
             callee.arity() +
             " arguments but got " +
             expressionargs.length +
@@ -204,7 +194,7 @@ export default function Interpreter({ report, logger = console.log }: Args) {
     throw value;
   }
   function visitFunctionStatement(stmt: FunctionStatement) {
-    const fn = new LoxFunction({
+    const fn = new ToxFunction({
       declaration: stmt,
       report,
       closure: environment,
@@ -314,6 +304,7 @@ export default function Interpreter({ report, logger = console.log }: Args) {
 
   // global functions
 
+  // TODO: Fix definition of this inbuilt clock function
   globals.define("clock", {
     call: (interpreterFunctions, []) => Date.now(),
     arity: () => 0,
